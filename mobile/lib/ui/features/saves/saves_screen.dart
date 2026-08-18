@@ -202,10 +202,16 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                             ),
                           ),
                           const SizedBox(width: 8),
-                          FilledButton.icon(
+                          IconButton(
+                            tooltip: 'Add link',
                             onPressed: _add,
-                            icon: const Icon(Icons.add_rounded, size: 20),
-                            label: const Text('Add'),
+                            style: IconButton.styleFrom(
+                              backgroundColor: theme.colorScheme.primary,
+                              foregroundColor: theme.colorScheme.onPrimary,
+                              shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                              minimumSize: const Size(52, 52),
+                            ),
+                            icon: const Icon(Icons.add_rounded),
                           ),
                         ],
                       ),
