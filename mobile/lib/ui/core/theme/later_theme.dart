@@ -118,7 +118,7 @@ class LaterTheme {
           disabledForegroundColor: onPrimary.withValues(alpha: 0.7),
           elevation: 0,
           shadowColor: Colors.transparent,
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(0, 52),
           shape: const RoundedRectangleBorder(borderRadius: radius),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
@@ -136,7 +136,7 @@ class LaterTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: ink,
           side: BorderSide(color: line),
-          minimumSize: const Size.fromHeight(52),
+          minimumSize: const Size(0, 52),
           shape: const RoundedRectangleBorder(borderRadius: radius),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
