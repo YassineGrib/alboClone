@@ -46,6 +46,37 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _aiSummaryMeta = const VerificationMeta(
+    'aiSummary',
+  );
+  @override
+  late final GeneratedColumn<String> aiSummary = GeneratedColumn<String>(
+    'ai_summary',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _aiTagsMeta = const VerificationMeta('aiTags');
+  @override
+  late final GeneratedColumn<String> aiTags = GeneratedColumn<String>(
+    'ai_tags',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _collectionIdMeta = const VerificationMeta(
     'collectionId',
   );
@@ -130,6 +161,9 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
     url,
     title,
     imageUrl,
+    aiSummary,
+    category,
+    aiTags,
     collectionId,
     contentStatus,
     syncStatus,
@@ -175,6 +209,24 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
       context.handle(
         _imageUrlMeta,
         imageUrl.isAcceptableOrUnknown(data['image_url']!, _imageUrlMeta),
+      );
+    }
+    if (data.containsKey('ai_summary')) {
+      context.handle(
+        _aiSummaryMeta,
+        aiSummary.isAcceptableOrUnknown(data['ai_summary']!, _aiSummaryMeta),
+      );
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('ai_tags')) {
+      context.handle(
+        _aiTagsMeta,
+        aiTags.isAcceptableOrUnknown(data['ai_tags']!, _aiTagsMeta),
       );
     }
     if (data.containsKey('collection_id')) {
@@ -254,6 +306,18 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
         DriftSqlType.string,
         data['${effectivePrefix}image_url'],
       ),
+      aiSummary: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ai_summary'],
+      ),
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
+      aiTags: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ai_tags'],
+      ),
       collectionId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}collection_id'],
@@ -296,6 +360,9 @@ class Save extends DataClass implements Insertable<Save> {
   final String url;
   final String title;
   final String? imageUrl;
+  final String? aiSummary;
+  final String? category;
+  final String? aiTags;
   final String? collectionId;
   final String contentStatus;
   final String syncStatus;
@@ -308,6 +375,9 @@ class Save extends DataClass implements Insertable<Save> {
     required this.url,
     required this.title,
     this.imageUrl,
+    this.aiSummary,
+    this.category,
+    this.aiTags,
     this.collectionId,
     required this.contentStatus,
     required this.syncStatus,
@@ -324,6 +394,15 @@ class Save extends DataClass implements Insertable<Save> {
     map['title'] = Variable<String>(title);
     if (!nullToAbsent || imageUrl != null) {
       map['image_url'] = Variable<String>(imageUrl);
+    }
+    if (!nullToAbsent || aiSummary != null) {
+      map['ai_summary'] = Variable<String>(aiSummary);
+    }
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
+    }
+    if (!nullToAbsent || aiTags != null) {
+      map['ai_tags'] = Variable<String>(aiTags);
     }
     if (!nullToAbsent || collectionId != null) {
       map['collection_id'] = Variable<String>(collectionId);
@@ -351,6 +430,15 @@ class Save extends DataClass implements Insertable<Save> {
       imageUrl: imageUrl == null && nullToAbsent
           ? const Value.absent()
           : Value(imageUrl),
+      aiSummary: aiSummary == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aiSummary),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
+      aiTags: aiTags == null && nullToAbsent
+          ? const Value.absent()
+          : Value(aiTags),
       collectionId: collectionId == null && nullToAbsent
           ? const Value.absent()
           : Value(collectionId),
@@ -379,6 +467,9 @@ class Save extends DataClass implements Insertable<Save> {
       url: serializer.fromJson<String>(json['url']),
       title: serializer.fromJson<String>(json['title']),
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
+      aiSummary: serializer.fromJson<String?>(json['aiSummary']),
+      category: serializer.fromJson<String?>(json['category']),
+      aiTags: serializer.fromJson<String?>(json['aiTags']),
       collectionId: serializer.fromJson<String?>(json['collectionId']),
       contentStatus: serializer.fromJson<String>(json['contentStatus']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
@@ -396,6 +487,9 @@ class Save extends DataClass implements Insertable<Save> {
       'url': serializer.toJson<String>(url),
       'title': serializer.toJson<String>(title),
       'imageUrl': serializer.toJson<String?>(imageUrl),
+      'aiSummary': serializer.toJson<String?>(aiSummary),
+      'category': serializer.toJson<String?>(category),
+      'aiTags': serializer.toJson<String?>(aiTags),
       'collectionId': serializer.toJson<String?>(collectionId),
       'contentStatus': serializer.toJson<String>(contentStatus),
       'syncStatus': serializer.toJson<String>(syncStatus),
@@ -411,6 +505,9 @@ class Save extends DataClass implements Insertable<Save> {
     String? url,
     String? title,
     Value<String?> imageUrl = const Value.absent(),
+    Value<String?> aiSummary = const Value.absent(),
+    Value<String?> category = const Value.absent(),
+    Value<String?> aiTags = const Value.absent(),
     Value<String?> collectionId = const Value.absent(),
     String? contentStatus,
     String? syncStatus,
@@ -423,6 +520,9 @@ class Save extends DataClass implements Insertable<Save> {
     url: url ?? this.url,
     title: title ?? this.title,
     imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
+    aiSummary: aiSummary.present ? aiSummary.value : this.aiSummary,
+    category: category.present ? category.value : this.category,
+    aiTags: aiTags.present ? aiTags.value : this.aiTags,
     collectionId: collectionId.present ? collectionId.value : this.collectionId,
     contentStatus: contentStatus ?? this.contentStatus,
     syncStatus: syncStatus ?? this.syncStatus,
@@ -437,6 +537,9 @@ class Save extends DataClass implements Insertable<Save> {
       url: data.url.present ? data.url.value : this.url,
       title: data.title.present ? data.title.value : this.title,
       imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
+      aiSummary: data.aiSummary.present ? data.aiSummary.value : this.aiSummary,
+      category: data.category.present ? data.category.value : this.category,
+      aiTags: data.aiTags.present ? data.aiTags.value : this.aiTags,
       collectionId: data.collectionId.present
           ? data.collectionId.value
           : this.collectionId,
@@ -460,6 +563,9 @@ class Save extends DataClass implements Insertable<Save> {
           ..write('url: $url, ')
           ..write('title: $title, ')
           ..write('imageUrl: $imageUrl, ')
+          ..write('aiSummary: $aiSummary, ')
+          ..write('category: $category, ')
+          ..write('aiTags: $aiTags, ')
           ..write('collectionId: $collectionId, ')
           ..write('contentStatus: $contentStatus, ')
           ..write('syncStatus: $syncStatus, ')
@@ -477,6 +583,9 @@ class Save extends DataClass implements Insertable<Save> {
     url,
     title,
     imageUrl,
+    aiSummary,
+    category,
+    aiTags,
     collectionId,
     contentStatus,
     syncStatus,
@@ -493,6 +602,9 @@ class Save extends DataClass implements Insertable<Save> {
           other.url == this.url &&
           other.title == this.title &&
           other.imageUrl == this.imageUrl &&
+          other.aiSummary == this.aiSummary &&
+          other.category == this.category &&
+          other.aiTags == this.aiTags &&
           other.collectionId == this.collectionId &&
           other.contentStatus == this.contentStatus &&
           other.syncStatus == this.syncStatus &&
@@ -507,6 +619,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
   final Value<String> url;
   final Value<String> title;
   final Value<String?> imageUrl;
+  final Value<String?> aiSummary;
+  final Value<String?> category;
+  final Value<String?> aiTags;
   final Value<String?> collectionId;
   final Value<String> contentStatus;
   final Value<String> syncStatus;
@@ -520,6 +635,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
     this.url = const Value.absent(),
     this.title = const Value.absent(),
     this.imageUrl = const Value.absent(),
+    this.aiSummary = const Value.absent(),
+    this.category = const Value.absent(),
+    this.aiTags = const Value.absent(),
     this.collectionId = const Value.absent(),
     this.contentStatus = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -534,6 +652,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
     required String url,
     required String title,
     this.imageUrl = const Value.absent(),
+    this.aiSummary = const Value.absent(),
+    this.category = const Value.absent(),
+    this.aiTags = const Value.absent(),
     this.collectionId = const Value.absent(),
     this.contentStatus = const Value.absent(),
     required String syncStatus,
@@ -552,6 +673,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
     Expression<String>? url,
     Expression<String>? title,
     Expression<String>? imageUrl,
+    Expression<String>? aiSummary,
+    Expression<String>? category,
+    Expression<String>? aiTags,
     Expression<String>? collectionId,
     Expression<String>? contentStatus,
     Expression<String>? syncStatus,
@@ -566,6 +690,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
       if (url != null) 'url': url,
       if (title != null) 'title': title,
       if (imageUrl != null) 'image_url': imageUrl,
+      if (aiSummary != null) 'ai_summary': aiSummary,
+      if (category != null) 'category': category,
+      if (aiTags != null) 'ai_tags': aiTags,
       if (collectionId != null) 'collection_id': collectionId,
       if (contentStatus != null) 'content_status': contentStatus,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -582,6 +709,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
     Value<String>? url,
     Value<String>? title,
     Value<String?>? imageUrl,
+    Value<String?>? aiSummary,
+    Value<String?>? category,
+    Value<String?>? aiTags,
     Value<String?>? collectionId,
     Value<String>? contentStatus,
     Value<String>? syncStatus,
@@ -596,6 +726,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
       url: url ?? this.url,
       title: title ?? this.title,
       imageUrl: imageUrl ?? this.imageUrl,
+      aiSummary: aiSummary ?? this.aiSummary,
+      category: category ?? this.category,
+      aiTags: aiTags ?? this.aiTags,
       collectionId: collectionId ?? this.collectionId,
       contentStatus: contentStatus ?? this.contentStatus,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -621,6 +754,15 @@ class SavesCompanion extends UpdateCompanion<Save> {
     }
     if (imageUrl.present) {
       map['image_url'] = Variable<String>(imageUrl.value);
+    }
+    if (aiSummary.present) {
+      map['ai_summary'] = Variable<String>(aiSummary.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
+    if (aiTags.present) {
+      map['ai_tags'] = Variable<String>(aiTags.value);
     }
     if (collectionId.present) {
       map['collection_id'] = Variable<String>(collectionId.value);
@@ -656,6 +798,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
           ..write('url: $url, ')
           ..write('title: $title, ')
           ..write('imageUrl: $imageUrl, ')
+          ..write('aiSummary: $aiSummary, ')
+          ..write('category: $category, ')
+          ..write('aiTags: $aiTags, ')
           ..write('collectionId: $collectionId, ')
           ..write('contentStatus: $contentStatus, ')
           ..write('syncStatus: $syncStatus, ')
@@ -1050,6 +1195,9 @@ typedef $$SavesTableCreateCompanionBuilder =
       required String url,
       required String title,
       Value<String?> imageUrl,
+      Value<String?> aiSummary,
+      Value<String?> category,
+      Value<String?> aiTags,
       Value<String?> collectionId,
       Value<String> contentStatus,
       required String syncStatus,
@@ -1065,6 +1213,9 @@ typedef $$SavesTableUpdateCompanionBuilder =
       Value<String> url,
       Value<String> title,
       Value<String?> imageUrl,
+      Value<String?> aiSummary,
+      Value<String?> category,
+      Value<String?> aiTags,
       Value<String?> collectionId,
       Value<String> contentStatus,
       Value<String> syncStatus,
@@ -1100,6 +1251,21 @@ class $$SavesTableFilterComposer extends Composer<_$AppDatabase, $SavesTable> {
 
   ColumnFilters<String> get imageUrl => $composableBuilder(
     column: $table.imageUrl,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get aiSummary => $composableBuilder(
+    column: $table.aiSummary,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get aiTags => $composableBuilder(
+    column: $table.aiTags,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1168,6 +1334,21 @@ class $$SavesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get aiSummary => $composableBuilder(
+    column: $table.aiSummary,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get aiTags => $composableBuilder(
+    column: $table.aiTags,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get collectionId => $composableBuilder(
     column: $table.collectionId,
     builder: (column) => ColumnOrderings(column),
@@ -1224,6 +1405,15 @@ class $$SavesTableAnnotationComposer
 
   GeneratedColumn<String> get imageUrl =>
       $composableBuilder(column: $table.imageUrl, builder: (column) => column);
+
+  GeneratedColumn<String> get aiSummary =>
+      $composableBuilder(column: $table.aiSummary, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumn<String> get aiTags =>
+      $composableBuilder(column: $table.aiTags, builder: (column) => column);
 
   GeneratedColumn<String> get collectionId => $composableBuilder(
     column: $table.collectionId,
@@ -1285,6 +1475,9 @@ class $$SavesTableTableManager
                 Value<String> url = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String?> imageUrl = const Value.absent(),
+                Value<String?> aiSummary = const Value.absent(),
+                Value<String?> category = const Value.absent(),
+                Value<String?> aiTags = const Value.absent(),
                 Value<String?> collectionId = const Value.absent(),
                 Value<String> contentStatus = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
@@ -1298,6 +1491,9 @@ class $$SavesTableTableManager
                 url: url,
                 title: title,
                 imageUrl: imageUrl,
+                aiSummary: aiSummary,
+                category: category,
+                aiTags: aiTags,
                 collectionId: collectionId,
                 contentStatus: contentStatus,
                 syncStatus: syncStatus,
@@ -1313,6 +1509,9 @@ class $$SavesTableTableManager
                 required String url,
                 required String title,
                 Value<String?> imageUrl = const Value.absent(),
+                Value<String?> aiSummary = const Value.absent(),
+                Value<String?> category = const Value.absent(),
+                Value<String?> aiTags = const Value.absent(),
                 Value<String?> collectionId = const Value.absent(),
                 Value<String> contentStatus = const Value.absent(),
                 required String syncStatus,
@@ -1326,6 +1525,9 @@ class $$SavesTableTableManager
                 url: url,
                 title: title,
                 imageUrl: imageUrl,
+                aiSummary: aiSummary,
+                category: category,
+                aiTags: aiTags,
                 collectionId: collectionId,
                 contentStatus: contentStatus,
                 syncStatus: syncStatus,

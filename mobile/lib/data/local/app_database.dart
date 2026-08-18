@@ -8,6 +8,9 @@ class Saves extends Table {
   TextColumn get url => text()();
   TextColumn get title => text()();
   TextColumn get imageUrl => text().nullable()();
+  TextColumn get aiSummary => text().nullable()();
+  TextColumn get category => text().nullable()();
+  TextColumn get aiTags => text().nullable()();
   TextColumn get collectionId => text().nullable()();
   TextColumn get contentStatus => text().withDefault(const Constant('pending'))();
   TextColumn get syncStatus => text()();
@@ -36,7 +39,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _open());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -47,6 +50,11 @@ class AppDatabase extends _$AppDatabase {
           if (from < 3) {
             await migrator.createTable(collections);
             await migrator.addColumn(saves, saves.collectionId);
+          }
+          if (from < 4) {
+            await migrator.addColumn(saves, saves.aiSummary);
+            await migrator.addColumn(saves, saves.category);
+            await migrator.addColumn(saves, saves.aiTags);
           }
         },
       );

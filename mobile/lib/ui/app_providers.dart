@@ -36,6 +36,50 @@ class ThemeModeController extends StateNotifier<ThemeMode> {
   }
 }
 
+final appLanguageProvider = StateNotifierProvider<AppLanguageController, String>((ref) {
+  return AppLanguageController(ref.watch(settingsRepositoryProvider));
+});
+
+class AppLanguageController extends StateNotifier<String> {
+  AppLanguageController(this._settings) : super(_settings.appLanguage());
+
+  final SettingsRepository _settings;
+
+  Future<void> setLanguage(String lang) async {
+    await _settings.setAppLanguage(lang);
+    state = lang;
+  }
+}
+
+final aiEnabledProvider = StateNotifierProvider<BoolSettingController, bool>((ref) {
+  return BoolSettingController(ref.watch(sharedPreferencesProvider), 'ai_enabled', true);
+});
+
+final aiSummarizationProvider = StateNotifierProvider<BoolSettingController, bool>((ref) {
+  return BoolSettingController(ref.watch(sharedPreferencesProvider), 'ai_summarization', true);
+});
+
+final aiCategorizationProvider = StateNotifierProvider<BoolSettingController, bool>((ref) {
+  return BoolSettingController(ref.watch(sharedPreferencesProvider), 'ai_categorization', true);
+});
+
+final aiTagsEnabledProvider = StateNotifierProvider<BoolSettingController, bool>((ref) {
+  return BoolSettingController(ref.watch(sharedPreferencesProvider), 'ai_tags', true);
+});
+
+class BoolSettingController extends StateNotifier<bool> {
+  BoolSettingController(this._prefs, this._key, bool defaultValue)
+      : super(_prefs.getBool(_key) ?? defaultValue);
+
+  final SharedPreferences _prefs;
+  final String _key;
+
+  Future<void> set(bool value) async {
+    await _prefs.setBool(_key, value);
+    state = value;
+  }
+}
+
 final apiBaseUrlProvider = StateNotifierProvider<ApiBaseUrlController, String>((ref) {
   return ApiBaseUrlController(ref.watch(settingsRepositoryProvider));
 });
@@ -134,6 +178,10 @@ class SaveFilterController extends StateNotifier<SaveFilter> {
 
   void setApp(String? appId) {
     state = appId == null ? state.copyWith(clearApp: true) : state.copyWith(appId: appId);
+  }
+
+  void setCategory(String? category) {
+    state = category == null ? state.copyWith(clearCategory: true) : state.copyWith(category: category);
   }
 
   void clearAdvanced() => state = state.clearAdvanced();

@@ -12,6 +12,13 @@ class StoreSaveRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('collection_id') === 'global' || empty($this->input('collection_id'))) {
+            $this->merge(['collection_id' => null]);
+        }
+    }
+
     /**
      * @return array<string, mixed>
      */

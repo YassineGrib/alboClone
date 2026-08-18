@@ -79,6 +79,16 @@ void main() {
     expect(result.map((item) => item.id), ['today']);
   });
 
+  test('category filter matches category name', () {
+    final video = _save(id: 'v1').copyWith(category: 'Video');
+    final article = _save(id: 'a1').copyWith(category: 'Article');
+    final result = SaveQuery.apply(
+      saves: [video, article],
+      filter: const SaveFilter(category: 'Video'),
+    );
+    expect(result.map((item) => item.id), ['v1']);
+  });
+
   test('app filter matches tiktok host', () {
     final tiktok = _save(id: 'tt', url: 'https://vm.tiktok.com/ZMabc/');
     final web = _save(id: 'web', url: 'https://example.com/x');

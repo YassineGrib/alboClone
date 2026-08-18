@@ -36,6 +36,7 @@ class SaveFilter {
     this.status,
     this.when = SaveWhen.any,
     this.appId,
+    this.category,
   });
 
   final String query;
@@ -43,12 +44,14 @@ class SaveFilter {
   final ContentStatus? status;
   final SaveWhen when;
   final String? appId;
+  final String? category;
 
   bool get isConstrained {
     return collection != const CollectionScope.all() ||
         status != null ||
         when != SaveWhen.any ||
-        appId != null;
+        appId != null ||
+        category != null;
   }
 
   SaveFilter copyWith({
@@ -57,8 +60,10 @@ class SaveFilter {
     ContentStatus? status,
     SaveWhen? when,
     String? appId,
+    String? category,
     bool clearStatus = false,
     bool clearApp = false,
+    bool clearCategory = false,
   }) {
     return SaveFilter(
       query: query ?? this.query,
@@ -66,6 +71,7 @@ class SaveFilter {
       status: clearStatus ? null : (status ?? this.status),
       when: when ?? this.when,
       appId: clearApp ? null : (appId ?? this.appId),
+      category: clearCategory ? null : (category ?? this.category),
     );
   }
 
@@ -98,6 +104,10 @@ class SaveQuery {
       }
 
       if (filter.appId != null && SourceApp.idFor(item.url) != filter.appId) {
+        return false;
+      }
+
+      if (filter.category != null && (item.category?.toLowerCase() != filter.category!.toLowerCase())) {
         return false;
       }
 

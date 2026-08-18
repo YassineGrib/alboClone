@@ -45,6 +45,9 @@ class SaveController extends Controller
             }
         }
 
+        $limit = min(max(1, $request->integer('limit', 100)), 500);
+        $query->limit($limit);
+
         return response()->json(
             $query->get()->map(fn (Save $save) => $this->payload($save))->values(),
         );
@@ -62,6 +65,8 @@ class SaveController extends Controller
             return response()->json($this->payload($existing));
         }
 
+        $now = $request->date('created_at') ?? now();
+
         $save = Save::query()->create([
             'id' => $request->string('id')->toString(),
             'user_id' => $request->user()->id,
@@ -69,12 +74,43 @@ class SaveController extends Controller
             'title' => $request->string('title')->toString(),
             'content_status' => 'pending',
             'collection_id' => $request->input('collection_id'),
-            'created_at' => $request->date('created_at') ?? now(),
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
 
-        ParseSaveJob::dispatch($save->id)->afterResponse();
+        $aiEnabled = $request->boolean('ai_enabled', true);
+        ParseSaveJob::dispatch($save->id, $aiEnabled)->afterResponse();
 
         return response()->json($this->payload($save));
+    }
+
+    public function autoOrganize(Request $request): JsonResponse
+    {
+        $userId = $request->user()->id;
+        $unfiled = Save::query()
+            ->where('user_id', $userId)
+            ->whereNull('deleted_at')
+            ->whereNull('collection_id')
+            ->get();
+
+        $count = 0;
+        foreach ($unfiled as $save) {
+            $cat = !empty($save->category) ? trim($save->category) : null;
+            if ($cat && !in_array(strtolower($cat), ['link', 'other'], true)) {
+                $collection = \App\Models\Collection::firstOrCreate(
+                    ['user_id' => $userId, 'name' => ucfirst($cat)],
+                    ['id' => (string) \Illuminate\Support\Str::uuid()]
+                );
+                $save->collection_id = $collection->id;
+                $save->save();
+                $count++;
+            }
+        }
+
+        return response()->json([
+            'message' => "Organized {$count} items into smart folders",
+            'organized_count' => $count,
+        ]);
     }
 
     public function update(UpdateSaveRequest $request, string $id): JsonResponse
@@ -124,6 +160,9 @@ class SaveController extends Controller
             'url' => $save->url,
             'title' => $save->title,
             'image_url' => $save->image_url,
+            'ai_summary' => $save->ai_summary,
+            'category' => $save->category,
+            'ai_tags' => $save->ai_tags ?? [],
             'content_status' => $save->content_status,
             'collection_id' => $save->collection_id,
             'created_at' => $save->created_at?->toIso8601String(),

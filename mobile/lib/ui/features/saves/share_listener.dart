@@ -32,20 +32,25 @@ class _ShareListenerState extends ConsumerState<ShareListener> {
   }
 
   Future<void> _boot() async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    if (!mounted) return;
+
     final intake = ref.read(shareIntakeProvider);
     if (ref.read(authTokenProvider) != null) {
       final drained = await intake.drainPending();
-      if (drained == ShareIntakeResult.saved) {
+      if (drained == ShareIntakeResult.saved && mounted) {
         _toast(drained);
       }
     }
 
     final shares = ref.read(incomingSharesProvider);
     final initial = await shares.takeColdStart();
-    if (initial != null) {
+    if (initial != null && mounted) {
       await _ingest(initial);
     }
-    _sub = shares.watch().listen(_ingest);
+    if (mounted) {
+      _sub = shares.watch().listen(_ingest, onError: (_) {});
+    }
   }
 
   Future<void> _ingest(String raw) async {

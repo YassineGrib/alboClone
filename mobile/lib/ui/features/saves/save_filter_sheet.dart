@@ -18,6 +18,11 @@ class SaveFilterSheet extends ConsumerWidget {
       for (final item in saves) SourceApp.idFor(item.url),
     }.toList()
       ..sort((a, b) => SourceApp.label(a).compareTo(SourceApp.label(b)));
+    final categories = {
+      for (final item in saves)
+        if (item.category != null && item.category!.trim().isNotEmpty) item.category!.trim(),
+    }.toList()
+      ..sort();
     final theme = Theme.of(context);
 
     return SafeArea(
@@ -40,6 +45,25 @@ class SaveFilterSheet extends ConsumerWidget {
                 ),
               ],
             ),
+            if (categories.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _Section(
+                title: 'Category',
+                children: [
+                  _Chip(
+                    label: 'All Categories',
+                    selected: filter.category == null,
+                    onTap: () => ref.read(saveFilterProvider.notifier).setCategory(null),
+                  ),
+                  for (final cat in categories)
+                    _Chip(
+                      label: cat,
+                      selected: filter.category?.toLowerCase() == cat.toLowerCase(),
+                      onTap: () => ref.read(saveFilterProvider.notifier).setCategory(cat),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 8),
             _Section(
               title: 'When',

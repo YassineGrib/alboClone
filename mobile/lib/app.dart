@@ -13,11 +13,19 @@ class LaterApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final token = ref.watch(authTokenProvider);
+    final lang = ref.watch(appLanguageProvider);
+    final locale = lang == 'system' ? null : Locale(lang);
 
     return MaterialApp(
       title: 'Later',
       debugShowCheckedModeBanner: false,
       scaffoldMessengerKey: laterMessengerKey,
+      locale: locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+        Locale('fr'),
+      ],
       theme: LaterTheme.light(),
       darkTheme: LaterTheme.dark(),
       themeMode: mode,

@@ -12,8 +12,9 @@ import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/core/widgets/later_logo.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
-import 'package:later/ui/core/widgets/sync_chip.dart';
+import 'package:later/ui/core/widgets/swipe_to_delete_tile.dart';
 import 'package:later/ui/features/collections/collections_screen.dart';
+import 'package:later/ui/features/saves/save_detail_screen.dart';
 import 'package:later/ui/features/saves/save_filter_sheet.dart';
 import 'package:later/ui/features/settings/settings_screen.dart';
 
@@ -71,9 +72,11 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
   Future<void> _add() async {
     setState(() => _fieldError = null);
     try {
+      final aiEnabled = ref.read(aiEnabledProvider);
       await ref.read(saveRepositoryProvider).addUrl(
             _url.text,
             collectionId: _activeCollectionId,
+            aiEnabled: aiEnabled,
           );
       _url.clear();
       _urlFocus.unfocus();
@@ -261,6 +264,53 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                           ),
                         ],
                       ),
+                      // Horizontal Category Filter Bar
+                      () {
+                        final rawSaves = ref.watch(savesProvider).asData?.value ?? [];
+                        final categories = {
+                          for (final s in rawSaves)
+                            if (s.category != null && s.category!.trim().isNotEmpty) s.category!.trim(),
+                        }.toList()..sort();
+
+                        if (categories.isEmpty) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                FilterChip(
+                                  label: const Text('All'),
+                                  selected: filter.category == null,
+                                  onSelected: (_) => ref.read(saveFilterProvider.notifier).setCategory(null),
+                                  visualDensity: VisualDensity.compact,
+                                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                                ),
+                                const SizedBox(width: 6),
+                                for (final cat in categories) ...[
+                                  FilterChip(
+                                    label: Text(cat),
+                                    selected: filter.category?.toLowerCase() == cat.toLowerCase(),
+                                    onSelected: (_) {
+                                      if (filter.category?.toLowerCase() == cat.toLowerCase()) {
+                                        ref.read(saveFilterProvider.notifier).setCategory(null);
+                                      } else {
+                                        ref.read(saveFilterProvider.notifier).setCategory(cat);
+                                      }
+                                    },
+                                    visualDensity: VisualDensity.compact,
+                                    selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                    shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                                  ),
+                                  const SizedBox(width: 6),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }(),
                     ],
                   ),
                 ),
@@ -437,37 +487,28 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
     final sourceAppId = SourceApp.idFor(item.url);
     final sourceLabel = SourceApp.label(sourceAppId);
 
-    return Dismissible(
-      key: ValueKey(item.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => ref.read(saveRepositoryProvider).delete(item),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        color: LaterColors.chipFailedBg,
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(Icons.delete_outline_rounded, color: LaterColors.chipFailedFg, size: 22),
-            SizedBox(width: 8),
-            Text(
-              'Delete',
-              style: TextStyle(
-                color: LaterColors.chipFailedFg,
-                fontWeight: FontWeight.w600,
+    return SwipeToDeleteTile(
+      itemKey: ValueKey(item.id),
+      onDismissed: () => ref.read(saveRepositoryProvider).delete(item),
+      onMove: () => _move(item),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => SaveDetailScreen(
+                item: item,
+                folderName: folderName,
               ),
             ),
-          ],
-        ),
-      ),
-      child: InkWell(
+          );
+        },
         onLongPress: () => _move(item),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Thumb(url: item.imageUrl),
+              _Thumb(url: item.imageUrl, itemUrl: item.url),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -482,9 +523,47 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                         height: 1.25,
                       ),
                     ),
+                    if (item.aiSummary != null && item.aiSummary!.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        '✨ ${item.aiSummary}',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: 11.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 6),
                     Row(
                       children: [
+                        if (item.category != null && item.category!.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.auto_awesome_rounded, size: 10, color: Colors.amber),
+                                const SizedBox(width: 3),
+                                Text(
+                                  item.category!,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: Colors.amber.shade900,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         if (folderName != null) ...[
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -529,46 +608,6 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SyncChip(status: item.syncStatus),
-                  PopupMenuButton<String>(
-                    icon: Icon(Icons.more_vert_rounded, size: 20, color: theme.colorScheme.secondary),
-                    onSelected: (value) {
-                      if (value == 'move') {
-                        _move(item);
-                      } else if (value == 'retry') {
-                        ref.read(saveRepositoryProvider).retry(item);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'move',
-                        child: Row(
-                          children: [
-                            Icon(Icons.drive_file_move_outlined, size: 18),
-                            SizedBox(width: 10),
-                            Text('Move to folder'),
-                          ],
-                        ),
-                      ),
-                      if (item.syncStatus == SyncStatus.syncFailed)
-                        const PopupMenuItem(
-                          value: 'retry',
-                          child: Row(
-                            children: [
-                              Icon(Icons.refresh_rounded, size: 18),
-                              SizedBox(width: 10),
-                              Text('Retry sync'),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
             ],
           ),
         ),
@@ -578,9 +617,10 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
 }
 
 class _Thumb extends StatelessWidget {
-  const _Thumb({required this.url});
+  const _Thumb({required this.url, required this.itemUrl});
 
   final String? url;
+  final String itemUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -588,12 +628,16 @@ class _Thumb extends StatelessWidget {
     final fallbackBg = theme.colorScheme.surfaceContainerHighest;
     final fallbackFg = theme.colorScheme.secondary;
 
+    final host = (Uri.tryParse(itemUrl)?.host ?? '').toLowerCase().replaceFirst(RegExp(r'^www\.'), '');
+    final faviconUrl = host.isNotEmpty ? 'https://www.google.com/s2/favicons?domain=$host&sz=128' : null;
+    final effectiveUrl = (url != null && url!.isNotEmpty) ? url! : faviconUrl;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: SizedBox(
         width: 52,
         height: 52,
-        child: url == null
+        child: effectiveUrl == null
             ? Container(
                 color: fallbackBg,
                 child: Icon(
@@ -603,9 +647,11 @@ class _Thumb extends StatelessWidget {
                 ),
               )
             : Image.network(
-                url!,
+                effectiveUrl,
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
+                cacheWidth: 156,
+                cacheHeight: 156,
+                errorBuilder: (context, error, stackTrace) => Container(
                   color: fallbackBg,
                   child: Icon(
                     Icons.language_rounded,

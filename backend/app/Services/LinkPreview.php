@@ -16,7 +16,17 @@ class LinkPreview
             ?? self::titleTag($html);
 
         $image = self::meta($html, 'og:image')
-            ?? self::meta($html, 'twitter:image');
+            ?? self::meta($html, 'twitter:image')
+            ?? self::linkRel($html, 'apple-touch-icon')
+            ?? self::linkRel($html, 'icon')
+            ?? self::linkRel($html, 'shortcut icon');
+
+        if ($image === null || trim($image) === '') {
+            $host = strtolower(parse_url($pageUrl, PHP_URL_HOST) ?? '');
+            if (!empty($host)) {
+                $image = "https://www.google.com/s2/favicons?domain={$host}&sz=128";
+            }
+        }
 
         return new self(
             title: $title !== null ? html_entity_decode(trim($title), ENT_QUOTES | ENT_HTML5, 'UTF-8') : null,
@@ -51,6 +61,16 @@ class LinkPreview
             }
         }
 
+        return null;
+    }
+
+    private static function linkRel(string $html, string $rel): ?string
+    {
+        $quoted = preg_quote($rel, '/');
+        $pattern = '/<link[^>]+rel=["\'][^"\']*'.$quoted.'[^"\']*["\'][^>]+href=["\']([^"\']+)["\']/i';
+        if (preg_match($pattern, $html, $matches) === 1) {
+            return html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        }
         return null;
     }
 

@@ -11,6 +11,7 @@ class LinkPreviewFetcher
         $oembed = $this->oembedEndpoint($url);
         if ($oembed !== null) {
             $response = Http::timeout(8)
+                ->withoutVerifying()
                 ->acceptJson()
                 ->get($oembed);
 
@@ -22,16 +23,23 @@ class LinkPreviewFetcher
             }
         }
 
-        $response = Http::timeout(8)
-            ->withHeaders([
-                'User-Agent' => 'LaterBot/1.0 (+https://later.local)',
-                'Accept' => 'text/html,application/xhtml+xml',
-            ])
-            ->get($url);
+        try {
+            $response = Http::timeout(8)
+                ->withoutVerifying()
+                ->withHeaders([
+                    'User-Agent' => 'LaterBot/1.0 (+https://later.local)',
+                    'Accept' => 'text/html,application/xhtml+xml',
+                ])
+                ->get($url);
 
-        $response->throw();
+            if ($response->successful()) {
+                return LinkPreview::fromHtml((string) $response->body(), $url);
+            }
+        } catch (\Throwable) {
+            // Fallback to title from URL
+        }
 
-        return LinkPreview::fromHtml((string) $response->body(), $url);
+        return new LinkPreview(title: $url, imageUrl: null);
     }
 
     private function oembedEndpoint(string $url): ?string

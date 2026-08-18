@@ -107,6 +107,28 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
     }
   }
 
+  bool _isAutoOrganizing = false;
+
+  Future<void> _autoOrganize() async {
+    setState(() => _isAutoOrganizing = true);
+    try {
+      await ref.read(saveRepositoryProvider).autoOrganize();
+      await ref.read(collectionRepositoryProvider).sync();
+      if (mounted) {
+        setState(() => _isAutoOrganizing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('AI Auto-Organize complete! Folders created and saves organized.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAutoOrganizing = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final folders = ref.watch(collectionsProvider);
@@ -141,6 +163,21 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: _isAutoOrganizing ? null : _autoOrganize,
+              icon: _isAutoOrganizing
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.amber),
+              label: Text(_isAutoOrganizing ? 'Organizing with AI...' : 'AI Auto-Organize into Folders'),
+            ),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: folders.when(
               data: (items) {

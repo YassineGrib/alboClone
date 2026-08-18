@@ -17,6 +17,7 @@ class _DownApi extends ApiClient {
     required String title,
     required DateTime createdAt,
     String? collectionId,
+    bool aiEnabled = true,
   }) async {
     throw ApiException("Couldn't reach the server.");
   }

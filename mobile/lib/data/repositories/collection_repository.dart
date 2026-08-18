@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:later/data/local/app_database.dart';
 import 'package:later/data/services/api_client.dart';
@@ -11,8 +13,29 @@ class CollectionRepository {
   final AppDatabase db;
   final ApiClient api;
   static const _uuid = Uuid();
+  static const globalCollectionId = 'global';
+  static const globalCollectionName = 'Global';
+
+  Future<void> ensureGlobalCollection() async {
+    final existing = await (db.select(db.collections)
+          ..where((row) => row.id.equals(globalCollectionId)))
+        .getSingleOrNull();
+
+    if (existing == null) {
+      final now = DateTime.now().toUtc();
+      final item = CollectionItem(
+        id: globalCollectionId,
+        name: globalCollectionName,
+        syncStatus: SyncStatus.synced,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await db.into(db.collections).insert(_toCompanion(item), mode: InsertMode.insertOrIgnore);
+    }
+  }
 
   Stream<List<CollectionItem>> watchAlive() {
+    unawaited(ensureGlobalCollection());
     return (db.select(db.collections)
           ..where((row) => row.syncStatus.isNotValue('pending_delete'))
           ..orderBy([(row) => OrderingTerm.asc(row.name)]))
@@ -66,6 +89,9 @@ class CollectionRepository {
   }
 
   Future<void> delete(CollectionItem item) async {
+    if (item.id == globalCollectionId) {
+      return;
+    }
     await (db.update(db.saves)..where((row) => row.collectionId.equals(item.id)))
         .write(const SavesCompanion(collectionId: Value(null)));
 

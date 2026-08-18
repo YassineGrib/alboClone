@@ -30,6 +30,7 @@ class ShareHandlerIncomingShares implements IncomingShares {
   Stream<String> watch() {
     try {
       return ShareHandler.instance.sharedMediaStream
+          .handleError((Object _) {})
           .map(_text)
           .where((value) => value != null)
           .cast<String>();

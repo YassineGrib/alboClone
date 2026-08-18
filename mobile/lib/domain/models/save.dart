@@ -11,6 +11,9 @@ class SaveItem {
     required this.syncStatus,
     required this.createdAt,
     this.imageUrl,
+    this.aiSummary,
+    this.category,
+    this.aiTags = const [],
     this.collectionId,
     this.syncError,
     this.deletedAt,
@@ -21,6 +24,9 @@ class SaveItem {
   final String url;
   final String title;
   final String? imageUrl;
+  final String? aiSummary;
+  final String? category;
+  final List<String> aiTags;
   final String? collectionId;
   final ContentStatus contentStatus;
   final SyncStatus syncStatus;
@@ -34,6 +40,9 @@ class SaveItem {
   SaveItem copyWith({
     String? title,
     String? imageUrl,
+    String? aiSummary,
+    String? category,
+    List<String>? aiTags,
     String? collectionId,
     ContentStatus? contentStatus,
     SyncStatus? syncStatus,
@@ -49,6 +58,9 @@ class SaveItem {
       url: url,
       title: title ?? this.title,
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
+      aiSummary: aiSummary ?? this.aiSummary,
+      category: category ?? this.category,
+      aiTags: aiTags ?? this.aiTags,
       collectionId: clearCollectionId ? null : (collectionId ?? this.collectionId),
       contentStatus: contentStatus ?? this.contentStatus,
       syncStatus: syncStatus ?? this.syncStatus,

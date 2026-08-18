@@ -8,11 +8,16 @@ class SettingsRepository {
   static const apiKey = 'later.apiBaseUrl';
   static const themeKey = 'later.themeMode';
   static const pendingShareKey = 'later.pendingShare';
+  static const languageKey = 'later.app_language';
   static const defaultApi = 'http://127.0.0.1:8080';
 
   String apiBaseUrl() => prefs.getString(apiKey) ?? defaultApi;
 
   Future<void> setApiBaseUrl(String value) => prefs.setString(apiKey, value.trim());
+
+  String appLanguage() => prefs.getString(languageKey) ?? 'system';
+
+  Future<void> setAppLanguage(String lang) => prefs.setString(languageKey, lang);
 
   ThemeMode themeMode() {
     return switch (prefs.getString(themeKey)) {

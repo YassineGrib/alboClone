@@ -9,25 +9,30 @@ class SyncChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, bg, fg) = switch (status) {
-      SyncStatus.pendingSync => ('Pending', LaterColors.chipPendingBg, LaterColors.chipPendingFg),
-      SyncStatus.synced => ('Synced', LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
-      SyncStatus.syncFailed => ('Failed', LaterColors.chipFailedBg, LaterColors.chipFailedFg),
+    final (label, fullLabel, bg, fg) = switch (status) {
+      SyncStatus.pendingSync => ('P', 'Pending sync', LaterColors.chipPendingBg, LaterColors.chipPendingFg),
+      SyncStatus.synced => ('S', 'Synced', LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
+      SyncStatus.syncFailed => ('F', 'Sync failed', LaterColors.chipFailedBg, LaterColors.chipFailedFg),
     };
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          color: fg,
-          fontSize: 11,
-          letterSpacing: 0.6,
-          fontWeight: FontWeight.w600,
+    return Tooltip(
+      message: fullLabel,
+      child: Container(
+        width: 20,
+        height: 20,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: fg,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            height: 1.0,
+          ),
         ),
       ),
     );

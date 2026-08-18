@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LaterColors {
   static const lightCanvas = Color(0xFFF7F6F3);
@@ -68,12 +69,31 @@ class LaterTheme {
       onSurface: ink,
     );
 
+    final ibmArabicFamily = GoogleFonts.ibmPlexSansArabic().fontFamily;
+    final ibmSansFamily = GoogleFonts.ibmPlexSans().fontFamily;
+
+    final baseTextTheme = TextTheme(
+      bodyLarge: TextStyle(color: ink, fontSize: 16, height: 1.4),
+      bodyMedium: TextStyle(color: ink, fontSize: 16, height: 1.4),
+      bodySmall: TextStyle(color: muted, fontSize: 13, height: 1.4),
+      titleLarge: TextStyle(color: ink, fontSize: 22, fontWeight: FontWeight.w600),
+      titleMedium: TextStyle(color: ink, fontSize: 16, fontWeight: FontWeight.w600),
+      titleSmall: TextStyle(color: ink, fontSize: 14, fontWeight: FontWeight.w600),
+      labelLarge: TextStyle(color: ink, fontSize: 14, fontWeight: FontWeight.w600),
+      labelMedium: TextStyle(color: ink, fontSize: 12, fontWeight: FontWeight.w500),
+      labelSmall: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w500),
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       scaffoldBackgroundColor: canvas,
       canvasColor: canvas,
-      fontFamily: null,
+      fontFamily: ibmArabicFamily,
+      fontFamilyFallback: [
+        if (ibmSansFamily != null) ibmSansFamily,
+      ],
+      textTheme: GoogleFonts.ibmPlexSansArabicTextTheme(baseTextTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: canvas,
         foregroundColor: ink,
@@ -84,6 +104,7 @@ class LaterTheme {
           color: ink,
           fontSize: 22,
           fontWeight: FontWeight.w600,
+          fontFamily: ibmArabicFamily,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

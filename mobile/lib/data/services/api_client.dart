@@ -16,18 +16,25 @@ class ApiClient {
   final String baseUrl;
   final String? token;
 
-  Dio get _dio {
-    return Dio(
-      BaseOptions(
-        baseUrl: baseUrl.endsWith('/') ? baseUrl : '$baseUrl/',
-        headers: {
-          'Accept': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        connectTimeout: const Duration(seconds: 8),
-        receiveTimeout: const Duration(seconds: 12),
-      ),
-    );
+  late final Dio _dio = Dio(
+    BaseOptions(
+      baseUrl: baseUrl.endsWith('/') ? baseUrl : '$baseUrl/',
+      headers: {
+        'Accept': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      connectTimeout: const Duration(seconds: 8),
+      receiveTimeout: const Duration(seconds: 12),
+    ),
+  );
+
+  Future<bool> checkConnection() async {
+    try {
+      final response = await _dio.get<dynamic>('up');
+      return response.statusCode == 200;
+    } on DioException catch (error) {
+      throw _map(error);
+    }
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -65,7 +72,9 @@ class ApiClient {
     required String title,
     required DateTime createdAt,
     String? collectionId,
+    bool aiEnabled = true,
   }) async {
+    final cleanCollectionId = (collectionId == null || collectionId == 'global') ? null : collectionId;
     try {
       final response = await _dio.post<Map<String, dynamic>>(
         'api/saves',
@@ -74,7 +83,8 @@ class ApiClient {
           'url': url,
           'title': title,
           'created_at': createdAt.toUtc().toIso8601String(),
-          'collection_id': ?collectionId,
+          'collection_id': cleanCollectionId,
+          'ai_enabled': aiEnabled,
         },
       );
       return response.data!;
@@ -87,11 +97,21 @@ class ApiClient {
     required String id,
     required String? collectionId,
   }) async {
+    final cleanCollectionId = (collectionId == null || collectionId == 'global') ? null : collectionId;
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
         'api/saves/$id',
-        data: {'collection_id': collectionId},
+        data: {'collection_id': cleanCollectionId},
       );
+      return response.data!;
+    } on DioException catch (error) {
+      throw _map(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> autoOrganizeSaves() async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>('api/saves/auto-organize');
       return response.data!;
     } on DioException catch (error) {
       throw _map(error);
@@ -163,7 +183,11 @@ class ApiClient {
       return ApiException('Unauthorized', statusCode: 401);
     }
     if (status == 422) {
-      return ApiException('Those credentials do not match.', statusCode: 422);
+      final data = error.response?.data;
+      if (data is Map && data['message'] != null) {
+        return ApiException(data['message'].toString(), statusCode: 422);
+      }
+      return ApiException('Validation error', statusCode: 422);
     }
     return ApiException("Couldn't reach the server.", statusCode: status);
   }

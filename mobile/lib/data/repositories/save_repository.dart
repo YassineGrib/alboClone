@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:later/data/local/app_database.dart';
+import 'package:later/data/repositories/collection_repository.dart';
 import 'package:later/data/services/api_client.dart';
 import 'package:later/domain/models/save.dart';
 import 'package:uuid/uuid.dart';
@@ -19,7 +20,7 @@ class SaveRepository {
         .map((rows) => rows.map(_toItem).toList());
   }
 
-  Future<SaveItem> addUrl(String raw, {String? collectionId}) async {
+  Future<SaveItem> addUrl(String raw, {String? collectionId, bool aiEnabled = true}) async {
     final url = raw.trim();
     final uri = Uri.tryParse(url);
     if (uri == null ||
@@ -29,12 +30,13 @@ class SaveRepository {
       throw const FormatException("That isn't a URL.");
     }
 
+    final targetCollectionId = collectionId ?? CollectionRepository.globalCollectionId;
     final now = DateTime.now().toUtc();
     final item = SaveItem(
       id: _uuid.v4(),
       url: url,
       title: url,
-      collectionId: collectionId,
+      collectionId: targetCollectionId,
       contentStatus: ContentStatus.pending,
       syncStatus: SyncStatus.pendingSync,
       createdAt: now,
@@ -44,14 +46,26 @@ class SaveRepository {
     await db.into(db.saves).insert(_toCompanion(item));
 
     try {
-      await api.createSave(
+      final json = await api.createSave(
         id: item.id,
         url: item.url,
         title: item.title,
         createdAt: item.createdAt,
         collectionId: item.collectionId,
+        aiEnabled: aiEnabled,
       );
-      final synced = item.copyWith(syncStatus: SyncStatus.synced, clearSyncError: true);
+      final rawTags = json['ai_tags'];
+      final List<String> parsedTags = rawTags is List ? rawTags.cast<String>() : [];
+      final synced = item.copyWith(
+        title: (json['title'] as String?) ?? item.title,
+        imageUrl: json['image_url'] as String? ?? item.imageUrl,
+        aiSummary: json['ai_summary'] as String? ?? item.aiSummary,
+        category: json['category'] as String? ?? item.category,
+        aiTags: parsedTags.isNotEmpty ? parsedTags : item.aiTags,
+        contentStatus: _contentStatus(json['content_status'] as String?),
+        syncStatus: SyncStatus.synced,
+        clearSyncError: true,
+      );
       await _update(synced);
       return synced;
     } on ApiException catch (error) {
@@ -64,20 +78,33 @@ class SaveRepository {
     }
   }
 
-  Future<void> retry(SaveItem item) async {
+  Future<void> retry(SaveItem item, {bool aiEnabled = true}) async {
     if (item.deletedAt != null) {
       await _pushDelete(item);
       return;
     }
     try {
-      await api.createSave(
+      final json = await api.createSave(
         id: item.id,
         url: item.url,
         title: item.title,
         createdAt: item.createdAt,
         collectionId: item.collectionId,
+        aiEnabled: aiEnabled,
       );
-      await _update(item.copyWith(syncStatus: SyncStatus.synced, clearSyncError: true));
+      final rawTags = json['ai_tags'];
+      final List<String> parsedTags = rawTags is List ? rawTags.cast<String>() : [];
+      final synced = item.copyWith(
+        title: (json['title'] as String?) ?? item.title,
+        imageUrl: json['image_url'] as String? ?? item.imageUrl,
+        aiSummary: json['ai_summary'] as String? ?? item.aiSummary,
+        category: json['category'] as String? ?? item.category,
+        aiTags: parsedTags.isNotEmpty ? parsedTags : item.aiTags,
+        contentStatus: _contentStatus(json['content_status'] as String?),
+        syncStatus: SyncStatus.synced,
+        clearSyncError: true,
+      );
+      await _update(synced);
     } on ApiException catch (error) {
       await _update(item.copyWith(
         syncStatus: SyncStatus.syncFailed,
@@ -148,14 +175,19 @@ class SaveRepository {
           final id = json['id'] as String;
           final local = await (db.select(db.saves)..where((row) => row.id.equals(id)))
               .getSingleOrNull();
-          if (local != null && local.syncStatus != 'synced') {
+          if (local != null && local.deletedAt != null) {
             continue;
           }
+          final rawTags = json['ai_tags'];
+          final List<String> parsedTags = rawTags is List ? rawTags.cast<String>() : [];
           final item = SaveItem(
             id: id,
             url: json['url'] as String,
-            title: json['title'] as String,
+            title: (json['title'] as String?) ?? json['url'] as String,
             imageUrl: json['image_url'] as String?,
+            aiSummary: json['ai_summary'] as String?,
+            category: json['category'] as String?,
+            aiTags: parsedTags,
             collectionId: json['collection_id'] as String?,
             contentStatus: _contentStatus(json['content_status'] as String?),
             syncStatus: SyncStatus.synced,
@@ -164,8 +196,8 @@ class SaveRepository {
           );
           if (local == null) {
             await db.into(db.saves).insert(_toCompanion(item));
-          } else if (local.syncStatus == 'synced') {
-            await _update(item.copyWith(syncStatus: SyncStatus.synced));
+          } else {
+            await _update(item);
           }
         }
       } on ApiException {
@@ -174,6 +206,13 @@ class SaveRepository {
     } finally {
       _isSyncing = false;
     }
+  }
+
+  Future<void> autoOrganize() async {
+    try {
+      await api.autoOrganizeSaves();
+      await sync();
+    } catch (_) {}
   }
 
   Future<void> _pushDelete(SaveItem item) async {
@@ -194,11 +233,19 @@ class SaveRepository {
   }
 
   SaveItem _toItem(Save row) {
+    final rawTags = row.aiTags;
+    final tagsList = rawTags != null && rawTags.isNotEmpty
+        ? rawTags.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList()
+        : <String>[];
+
     return SaveItem(
       id: row.id,
       url: row.url,
       title: row.title,
       imageUrl: row.imageUrl,
+      aiSummary: row.aiSummary,
+      category: row.category,
+      aiTags: tagsList,
       collectionId: row.collectionId,
       contentStatus: _contentStatus(row.contentStatus),
       syncStatus: switch (row.syncStatus) {
@@ -227,6 +274,9 @@ class SaveRepository {
       url: item.url,
       title: item.title,
       imageUrl: Value(item.imageUrl),
+      aiSummary: Value(item.aiSummary),
+      category: Value(item.category),
+      aiTags: Value(item.aiTags.isNotEmpty ? item.aiTags.join(',') : null),
       collectionId: Value(item.collectionId),
       contentStatus: Value(switch (item.contentStatus) {
         ContentStatus.ready => 'ready',
