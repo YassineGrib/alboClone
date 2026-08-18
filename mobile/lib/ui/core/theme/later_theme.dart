@@ -90,9 +90,7 @@ class LaterTheme {
       scaffoldBackgroundColor: canvas,
       canvasColor: canvas,
       fontFamily: ibmArabicFamily,
-      fontFamilyFallback: [
-        if (ibmSansFamily != null) ibmSansFamily,
-      ],
+      fontFamilyFallback: ibmSansFamily != null ? [ibmSansFamily] : null,
       textTheme: GoogleFonts.ibmPlexSansArabicTextTheme(baseTextTheme),
       appBarTheme: AppBarTheme(
         backgroundColor: canvas,
@@ -207,11 +205,6 @@ class LaterTheme {
         shape: const RoundedRectangleBorder(borderRadius: radius),
         side: BorderSide(color: line),
         showCheckmark: false,
-      ),
-      textTheme: TextTheme(
-        bodyLarge: TextStyle(color: ink, fontSize: 16, height: 1.4),
-        bodyMedium: TextStyle(color: ink, fontSize: 16, height: 1.4),
-        bodySmall: TextStyle(color: muted, fontSize: 13, height: 1.4),
       ),
     );
   }

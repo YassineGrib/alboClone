@@ -25,16 +25,16 @@ void main() {
       ),
     );
 
-    // Verify title and main actions
+    // Verify title and badges
     expect(find.text('Flutter - Build apps for any screen'), findsOneWidget);
-    expect(find.text('Open Link'), findsOneWidget);
-
-    // Verify AI features
     expect(find.text('Article'), findsOneWidget);
     expect(find.text('Gemini AI Summary'), findsOneWidget);
+
+    // Scroll to see Open Link and metadata
+    await tester.scrollUntilVisible(find.text('Open Link'), 100);
+    expect(find.text('Open Link'), findsOneWidget);
     expect(find.textContaining('Flutter is Google framework'), findsOneWidget);
 
-    // Scroll to see bottom metadata
     await tester.scrollUntilVisible(find.text('Global'), 100);
     expect(find.text('Global'), findsOneWidget);
   });

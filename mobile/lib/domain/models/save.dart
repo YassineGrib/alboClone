@@ -13,6 +13,7 @@ class SaveItem {
     this.imageUrl,
     this.aiSummary,
     this.category,
+    this.priority = 0,
     this.aiTags = const [],
     this.collectionId,
     this.syncError,
@@ -26,6 +27,7 @@ class SaveItem {
   final String? imageUrl;
   final String? aiSummary;
   final String? category;
+  final int priority;
   final List<String> aiTags;
   final String? collectionId;
   final ContentStatus contentStatus;
@@ -36,12 +38,14 @@ class SaveItem {
   final DateTime? updatedAt;
 
   bool get isAlive => deletedAt == null;
+  bool get isImportant => priority > 0;
 
   SaveItem copyWith({
     String? title,
     String? imageUrl,
     String? aiSummary,
     String? category,
+    int? priority,
     List<String>? aiTags,
     String? collectionId,
     ContentStatus? contentStatus,
@@ -60,6 +64,7 @@ class SaveItem {
       imageUrl: clearImageUrl ? null : (imageUrl ?? this.imageUrl),
       aiSummary: aiSummary ?? this.aiSummary,
       category: category ?? this.category,
+      priority: priority ?? this.priority,
       aiTags: aiTags ?? this.aiTags,
       collectionId: clearCollectionId ? null : (collectionId ?? this.collectionId),
       contentStatus: contentStatus ?? this.contentStatus,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
@@ -25,6 +26,11 @@ class LaterApp extends ConsumerWidget {
         Locale('en'),
         Locale('ar'),
         Locale('fr'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
       ],
       theme: LaterTheme.light(),
       darkTheme: LaterTheme.dark(),

@@ -112,6 +112,12 @@ void main() {
     expect(find.text('Test Connection'), findsOneWidget);
     expect(find.text('Sync Status & Diagnostics'), findsOneWidget);
     expect(find.text('Sync Everything Now'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Language'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Language'), findsOneWidget);
   });
 }

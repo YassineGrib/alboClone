@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['id', 'user_id', 'url', 'title', 'image_url', 'ai_summary', 'category', 'ai_tags', 'content_status', 'collection_id', 'deleted_at', 'created_at', 'updated_at'])]
+#[Fillable(['id', 'user_id', 'url', 'title', 'image_url', 'ai_summary', 'category', 'priority', 'ai_tags', 'content_status', 'collection_id', 'deleted_at', 'created_at', 'updated_at'])]
 class Save extends Model
 {
     public $incrementing = false;

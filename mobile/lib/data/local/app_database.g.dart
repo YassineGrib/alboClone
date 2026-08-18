@@ -68,6 +68,18 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _priorityMeta = const VerificationMeta(
+    'priority',
+  );
+  @override
+  late final GeneratedColumn<int> priority = GeneratedColumn<int>(
+    'priority',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _aiTagsMeta = const VerificationMeta('aiTags');
   @override
   late final GeneratedColumn<String> aiTags = GeneratedColumn<String>(
@@ -163,6 +175,7 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
     imageUrl,
     aiSummary,
     category,
+    priority,
     aiTags,
     collectionId,
     contentStatus,
@@ -221,6 +234,12 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
       context.handle(
         _categoryMeta,
         category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
+    if (data.containsKey('priority')) {
+      context.handle(
+        _priorityMeta,
+        priority.isAcceptableOrUnknown(data['priority']!, _priorityMeta),
       );
     }
     if (data.containsKey('ai_tags')) {
@@ -314,6 +333,10 @@ class $SavesTable extends Saves with TableInfo<$SavesTable, Save> {
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       ),
+      priority: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}priority'],
+      )!,
       aiTags: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}ai_tags'],
@@ -362,6 +385,7 @@ class Save extends DataClass implements Insertable<Save> {
   final String? imageUrl;
   final String? aiSummary;
   final String? category;
+  final int priority;
   final String? aiTags;
   final String? collectionId;
   final String contentStatus;
@@ -377,6 +401,7 @@ class Save extends DataClass implements Insertable<Save> {
     this.imageUrl,
     this.aiSummary,
     this.category,
+    required this.priority,
     this.aiTags,
     this.collectionId,
     required this.contentStatus,
@@ -401,6 +426,7 @@ class Save extends DataClass implements Insertable<Save> {
     if (!nullToAbsent || category != null) {
       map['category'] = Variable<String>(category);
     }
+    map['priority'] = Variable<int>(priority);
     if (!nullToAbsent || aiTags != null) {
       map['ai_tags'] = Variable<String>(aiTags);
     }
@@ -436,6 +462,7 @@ class Save extends DataClass implements Insertable<Save> {
       category: category == null && nullToAbsent
           ? const Value.absent()
           : Value(category),
+      priority: Value(priority),
       aiTags: aiTags == null && nullToAbsent
           ? const Value.absent()
           : Value(aiTags),
@@ -469,6 +496,7 @@ class Save extends DataClass implements Insertable<Save> {
       imageUrl: serializer.fromJson<String?>(json['imageUrl']),
       aiSummary: serializer.fromJson<String?>(json['aiSummary']),
       category: serializer.fromJson<String?>(json['category']),
+      priority: serializer.fromJson<int>(json['priority']),
       aiTags: serializer.fromJson<String?>(json['aiTags']),
       collectionId: serializer.fromJson<String?>(json['collectionId']),
       contentStatus: serializer.fromJson<String>(json['contentStatus']),
@@ -489,6 +517,7 @@ class Save extends DataClass implements Insertable<Save> {
       'imageUrl': serializer.toJson<String?>(imageUrl),
       'aiSummary': serializer.toJson<String?>(aiSummary),
       'category': serializer.toJson<String?>(category),
+      'priority': serializer.toJson<int>(priority),
       'aiTags': serializer.toJson<String?>(aiTags),
       'collectionId': serializer.toJson<String?>(collectionId),
       'contentStatus': serializer.toJson<String>(contentStatus),
@@ -507,6 +536,7 @@ class Save extends DataClass implements Insertable<Save> {
     Value<String?> imageUrl = const Value.absent(),
     Value<String?> aiSummary = const Value.absent(),
     Value<String?> category = const Value.absent(),
+    int? priority,
     Value<String?> aiTags = const Value.absent(),
     Value<String?> collectionId = const Value.absent(),
     String? contentStatus,
@@ -522,6 +552,7 @@ class Save extends DataClass implements Insertable<Save> {
     imageUrl: imageUrl.present ? imageUrl.value : this.imageUrl,
     aiSummary: aiSummary.present ? aiSummary.value : this.aiSummary,
     category: category.present ? category.value : this.category,
+    priority: priority ?? this.priority,
     aiTags: aiTags.present ? aiTags.value : this.aiTags,
     collectionId: collectionId.present ? collectionId.value : this.collectionId,
     contentStatus: contentStatus ?? this.contentStatus,
@@ -539,6 +570,7 @@ class Save extends DataClass implements Insertable<Save> {
       imageUrl: data.imageUrl.present ? data.imageUrl.value : this.imageUrl,
       aiSummary: data.aiSummary.present ? data.aiSummary.value : this.aiSummary,
       category: data.category.present ? data.category.value : this.category,
+      priority: data.priority.present ? data.priority.value : this.priority,
       aiTags: data.aiTags.present ? data.aiTags.value : this.aiTags,
       collectionId: data.collectionId.present
           ? data.collectionId.value
@@ -565,6 +597,7 @@ class Save extends DataClass implements Insertable<Save> {
           ..write('imageUrl: $imageUrl, ')
           ..write('aiSummary: $aiSummary, ')
           ..write('category: $category, ')
+          ..write('priority: $priority, ')
           ..write('aiTags: $aiTags, ')
           ..write('collectionId: $collectionId, ')
           ..write('contentStatus: $contentStatus, ')
@@ -585,6 +618,7 @@ class Save extends DataClass implements Insertable<Save> {
     imageUrl,
     aiSummary,
     category,
+    priority,
     aiTags,
     collectionId,
     contentStatus,
@@ -604,6 +638,7 @@ class Save extends DataClass implements Insertable<Save> {
           other.imageUrl == this.imageUrl &&
           other.aiSummary == this.aiSummary &&
           other.category == this.category &&
+          other.priority == this.priority &&
           other.aiTags == this.aiTags &&
           other.collectionId == this.collectionId &&
           other.contentStatus == this.contentStatus &&
@@ -621,6 +656,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
   final Value<String?> imageUrl;
   final Value<String?> aiSummary;
   final Value<String?> category;
+  final Value<int> priority;
   final Value<String?> aiTags;
   final Value<String?> collectionId;
   final Value<String> contentStatus;
@@ -637,6 +673,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
     this.imageUrl = const Value.absent(),
     this.aiSummary = const Value.absent(),
     this.category = const Value.absent(),
+    this.priority = const Value.absent(),
     this.aiTags = const Value.absent(),
     this.collectionId = const Value.absent(),
     this.contentStatus = const Value.absent(),
@@ -654,6 +691,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
     this.imageUrl = const Value.absent(),
     this.aiSummary = const Value.absent(),
     this.category = const Value.absent(),
+    this.priority = const Value.absent(),
     this.aiTags = const Value.absent(),
     this.collectionId = const Value.absent(),
     this.contentStatus = const Value.absent(),
@@ -675,6 +713,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
     Expression<String>? imageUrl,
     Expression<String>? aiSummary,
     Expression<String>? category,
+    Expression<int>? priority,
     Expression<String>? aiTags,
     Expression<String>? collectionId,
     Expression<String>? contentStatus,
@@ -692,6 +731,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
       if (imageUrl != null) 'image_url': imageUrl,
       if (aiSummary != null) 'ai_summary': aiSummary,
       if (category != null) 'category': category,
+      if (priority != null) 'priority': priority,
       if (aiTags != null) 'ai_tags': aiTags,
       if (collectionId != null) 'collection_id': collectionId,
       if (contentStatus != null) 'content_status': contentStatus,
@@ -711,6 +751,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
     Value<String?>? imageUrl,
     Value<String?>? aiSummary,
     Value<String?>? category,
+    Value<int>? priority,
     Value<String?>? aiTags,
     Value<String?>? collectionId,
     Value<String>? contentStatus,
@@ -728,6 +769,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
       imageUrl: imageUrl ?? this.imageUrl,
       aiSummary: aiSummary ?? this.aiSummary,
       category: category ?? this.category,
+      priority: priority ?? this.priority,
       aiTags: aiTags ?? this.aiTags,
       collectionId: collectionId ?? this.collectionId,
       contentStatus: contentStatus ?? this.contentStatus,
@@ -760,6 +802,9 @@ class SavesCompanion extends UpdateCompanion<Save> {
     }
     if (category.present) {
       map['category'] = Variable<String>(category.value);
+    }
+    if (priority.present) {
+      map['priority'] = Variable<int>(priority.value);
     }
     if (aiTags.present) {
       map['ai_tags'] = Variable<String>(aiTags.value);
@@ -800,6 +845,7 @@ class SavesCompanion extends UpdateCompanion<Save> {
           ..write('imageUrl: $imageUrl, ')
           ..write('aiSummary: $aiSummary, ')
           ..write('category: $category, ')
+          ..write('priority: $priority, ')
           ..write('aiTags: $aiTags, ')
           ..write('collectionId: $collectionId, ')
           ..write('contentStatus: $contentStatus, ')
@@ -1197,6 +1243,7 @@ typedef $$SavesTableCreateCompanionBuilder =
       Value<String?> imageUrl,
       Value<String?> aiSummary,
       Value<String?> category,
+      Value<int> priority,
       Value<String?> aiTags,
       Value<String?> collectionId,
       Value<String> contentStatus,
@@ -1215,6 +1262,7 @@ typedef $$SavesTableUpdateCompanionBuilder =
       Value<String?> imageUrl,
       Value<String?> aiSummary,
       Value<String?> category,
+      Value<int> priority,
       Value<String?> aiTags,
       Value<String?> collectionId,
       Value<String> contentStatus,
@@ -1261,6 +1309,11 @@ class $$SavesTableFilterComposer extends Composer<_$AppDatabase, $SavesTable> {
 
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get priority => $composableBuilder(
+    column: $table.priority,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1344,6 +1397,11 @@ class $$SavesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get priority => $composableBuilder(
+    column: $table.priority,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get aiTags => $composableBuilder(
     column: $table.aiTags,
     builder: (column) => ColumnOrderings(column),
@@ -1412,6 +1470,9 @@ class $$SavesTableAnnotationComposer
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
 
+  GeneratedColumn<int> get priority =>
+      $composableBuilder(column: $table.priority, builder: (column) => column);
+
   GeneratedColumn<String> get aiTags =>
       $composableBuilder(column: $table.aiTags, builder: (column) => column);
 
@@ -1477,6 +1538,7 @@ class $$SavesTableTableManager
                 Value<String?> imageUrl = const Value.absent(),
                 Value<String?> aiSummary = const Value.absent(),
                 Value<String?> category = const Value.absent(),
+                Value<int> priority = const Value.absent(),
                 Value<String?> aiTags = const Value.absent(),
                 Value<String?> collectionId = const Value.absent(),
                 Value<String> contentStatus = const Value.absent(),
@@ -1493,6 +1555,7 @@ class $$SavesTableTableManager
                 imageUrl: imageUrl,
                 aiSummary: aiSummary,
                 category: category,
+                priority: priority,
                 aiTags: aiTags,
                 collectionId: collectionId,
                 contentStatus: contentStatus,
@@ -1511,6 +1574,7 @@ class $$SavesTableTableManager
                 Value<String?> imageUrl = const Value.absent(),
                 Value<String?> aiSummary = const Value.absent(),
                 Value<String?> category = const Value.absent(),
+                Value<int> priority = const Value.absent(),
                 Value<String?> aiTags = const Value.absent(),
                 Value<String?> collectionId = const Value.absent(),
                 Value<String> contentStatus = const Value.absent(),
@@ -1527,6 +1591,7 @@ class $$SavesTableTableManager
                 imageUrl: imageUrl,
                 aiSummary: aiSummary,
                 category: category,
+                priority: priority,
                 aiTags: aiTags,
                 collectionId: collectionId,
                 contentStatus: contentStatus,

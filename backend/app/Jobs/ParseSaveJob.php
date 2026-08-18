@@ -31,7 +31,7 @@ class ParseSaveJob implements ShouldQueue
             if ($this->aiEnabled) {
                 // AI Enrichment with Gemini
                 $aiData = $gemini->analyze($save->url, $initialTitle);
-                if (!empty($aiData['title']) && ($initialTitle === $save->url || in_array(strtolower($initialTitle), ['instagram', 'facebook', 'login', 'tiktok', 'youtube'], true))) {
+                if (!empty($aiData['title'])) {
                     $save->title = $aiData['title'];
                 }
                 $save->ai_summary = $aiData['summary'] ?? null;

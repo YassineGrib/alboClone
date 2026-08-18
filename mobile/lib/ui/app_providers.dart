@@ -184,6 +184,10 @@ class SaveFilterController extends StateNotifier<SaveFilter> {
     state = category == null ? state.copyWith(clearCategory: true) : state.copyWith(category: category);
   }
 
+  void setSort(SaveSort sort) => state = state.copyWith(sort: sort);
+
+  void setPriorityFilter(PriorityFilter priorityFilter) => state = state.copyWith(priorityFilter: priorityFilter);
+
   void clearAdvanced() => state = state.clearAdvanced();
 }
 

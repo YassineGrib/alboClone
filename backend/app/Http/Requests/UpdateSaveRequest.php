@@ -25,8 +25,9 @@ class UpdateSaveRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'priority' => ['sometimes', 'integer', 'min:0', 'max:2'],
             'collection_id' => [
-                'present',
+                'sometimes',
                 'nullable',
                 'uuid',
                 Rule::exists('collections', 'id')->where(

@@ -99,6 +99,27 @@ void main() {
     expect(result.map((item) => item.id), ['tt']);
   });
 
+  test('sort by importance puts high priority first', () {
+    final normal = _save(id: 'normal').copyWith(priority: 0);
+    final medium = _save(id: 'medium').copyWith(priority: 1);
+    final high = _save(id: 'high').copyWith(priority: 2);
+    final result = SaveQuery.apply(
+      saves: [normal, medium, high],
+      filter: const SaveFilter(sort: SaveSort.importanceFirst),
+    );
+    expect(result.map((item) => item.id), ['high', 'medium', 'normal']);
+  });
+
+  test('priorityFilter keeps only important saves', () {
+    final normal = _save(id: 'normal').copyWith(priority: 0);
+    final important = _save(id: 'important').copyWith(priority: 2);
+    final result = SaveQuery.apply(
+      saves: [normal, important],
+      filter: const SaveFilter(priorityFilter: PriorityFilter.importantOnly),
+    );
+    expect(result.map((item) => item.id), ['important']);
+  });
+
   test('groups saves as today, yesterday, then older', () {
     final now = DateTime(2026, 8, 18, 20);
     final groups = SaveTimeline.group(

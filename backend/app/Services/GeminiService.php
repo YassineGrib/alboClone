@@ -16,15 +16,23 @@ class GeminiService
         }
 
         $prompt = <<<PROMPT
-Analyze this saved bookmark for a Save-for-Later app:
+You are a bookmark title cleaner and content summarizer for a modern Save-for-Later app.
+Analyze this saved link:
 URL: {$url}
-Given Title: {$title}
+Raw Title / Caption: {$title}
 
-If the Given Title is a raw URL, generic word like "Instagram" or "Login", generate a clean descriptive title.
+Title Rules:
+- Always generate a clean, concise, summarized title (3 to 8 words maximum, under 60 characters).
+- Remove all social media author names, bios, "on Instagram:", "@usernames", emoji spam, and hashtags (#tag).
+- Capture the main topic or essence in the same language as the content (Arabic if Arabic, English if English, French if French).
+
+Summary Rules:
+- Concise 1-2 sentence description summarizing the core value/content of the link.
+
 Return ONLY a raw JSON object (with no backticks, no markdown) with exact keys:
 {
-  "title": "Clean, descriptive human title for this link",
-  "summary": "Concise 1-2 sentence description of this link",
+  "title": "Clean concise summarized title",
+  "summary": "1-2 sentence summary of this link",
   "category": "One of: Article, Recipe, Video, Place, Workout, Product, Tool, Post, Link",
   "tags": ["tag1", "tag2", "tag3"]
 }

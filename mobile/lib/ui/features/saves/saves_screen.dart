@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:later/data/services/api_client.dart';
@@ -27,7 +28,6 @@ class SavesScreen extends ConsumerStatefulWidget {
 
 class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingObserver {
   final _url = TextEditingController();
-  final _search = TextEditingController();
   final _urlFocus = FocusNode();
   String? _fieldError;
   Timer? _poll;
@@ -52,7 +52,6 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
     _poll?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _url.dispose();
-    _search.dispose();
     _urlFocus.dispose();
     super.dispose();
   }
@@ -180,140 +179,82 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Column(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _url,
-                              focusNode: _urlFocus,
-                              keyboardType: TextInputType.url,
-                              textInputAction: TextInputAction.go,
-                              decoration: InputDecoration(
-                                hintText: 'Paste a link to save...',
-                                prefixIcon: Icon(
-                                  Icons.link_rounded,
-                                  size: 20,
-                                  color: theme.colorScheme.secondary,
-                                ),
-                                errorText: _fieldError,
-                              ),
-                              onSubmitted: (_) => _add(),
+                      Expanded(
+                        child: TextField(
+                          controller: _url,
+                          focusNode: _urlFocus,
+                          keyboardType: TextInputType.url,
+                          textInputAction: TextInputAction.go,
+                          decoration: InputDecoration(
+                            hintText: 'Paste a link to save...',
+                            prefixIcon: Icon(
+                              Icons.link_rounded,
+                              size: 20,
+                              color: theme.colorScheme.secondary,
                             ),
+                            errorText: _fieldError,
                           ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            tooltip: 'Add link',
-                            onPressed: _add,
-                            style: IconButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                              minimumSize: const Size(52, 52),
-                            ),
-                            icon: const Icon(Icons.add_rounded),
-                          ),
-                        ],
+                          onSubmitted: (_) => _add(),
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _search,
-                              textInputAction: TextInputAction.search,
-                              decoration: InputDecoration(
-                                hintText: 'Search titles or URLs...',
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  size: 20,
-                                  color: theme.colorScheme.secondary,
-                                ),
-                                suffixIcon: filter.query.isEmpty
-                                    ? null
-                                    : IconButton(
-                                        icon: const Icon(Icons.close_rounded, size: 18),
-                                        onPressed: () {
-                                          _search.clear();
-                                          ref.read(saveFilterProvider.notifier).setQuery('');
-                                        },
-                                      ),
-                              ),
-                              onChanged: (value) => ref.read(saveFilterProvider.notifier).setQuery(value),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Badge(
-                            isLabelVisible: filter.isConstrained,
-                            smallSize: 8,
-                            child: IconButton(
-                              tooltip: 'Filters',
-                              onPressed: _openFilters,
-                              style: IconButton.styleFrom(
-                                backgroundColor: theme.colorScheme.surface,
-                                foregroundColor: theme.colorScheme.onSurface,
-                                shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                                side: BorderSide(color: theme.dividerColor),
-                                minimumSize: const Size(52, 52),
-                              ),
-                              icon: const Icon(Icons.tune_rounded),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: 'Add link',
+                        onPressed: _add,
+                        style: IconButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                          minimumSize: const Size(52, 52),
+                        ),
+                        icon: const Icon(Icons.add_rounded),
                       ),
-                      // Horizontal Category Filter Bar
-                      () {
-                        final rawSaves = ref.watch(savesProvider).asData?.value ?? [];
-                        final categories = {
-                          for (final s in rawSaves)
-                            if (s.category != null && s.category!.trim().isNotEmpty) s.category!.trim(),
-                        }.toList()..sort();
-
-                        if (categories.isEmpty) return const SizedBox.shrink();
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                FilterChip(
-                                  label: const Text('All'),
-                                  selected: filter.category == null,
-                                  onSelected: (_) => ref.read(saveFilterProvider.notifier).setCategory(null),
-                                  visualDensity: VisualDensity.compact,
-                                  selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                  shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                                ),
-                                const SizedBox(width: 6),
-                                for (final cat in categories) ...[
-                                  FilterChip(
-                                    label: Text(cat),
-                                    selected: filter.category?.toLowerCase() == cat.toLowerCase(),
-                                    onSelected: (_) {
-                                      if (filter.category?.toLowerCase() == cat.toLowerCase()) {
-                                        ref.read(saveFilterProvider.notifier).setCategory(null);
-                                      } else {
-                                        ref.read(saveFilterProvider.notifier).setCategory(cat);
-                                      }
-                                    },
-                                    visualDensity: VisualDensity.compact,
-                                    selectedColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                    shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
-                      }(),
                     ],
                   ),
                 ),
+                if (filter.isConstrained)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.filter_alt_outlined, size: 14, color: theme.colorScheme.primary),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              filter.query.isNotEmpty
+                                  ? 'Search: "${filter.query}"'
+                                  : (filter.sort == SaveSort.importanceFirst ? 'Sorted: Important first' : 'Filters applied'),
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => ref.read(saveFilterProvider.notifier).clearAdvanced(),
+                            child: Text(
+                              'Clear',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: saves.when(
                     data: (items) {
@@ -395,7 +336,6 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                                 const SizedBox(height: 12),
                                 TextButton.icon(
                                   onPressed: () {
-                                    _search.clear();
                                     ref.read(saveFilterProvider.notifier).clearAdvanced();
                                   },
                                   icon: const Icon(Icons.filter_alt_off_outlined, size: 18),
@@ -471,6 +411,23 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
           ),
         ],
       ),
+      floatingActionButton: Badge(
+        isLabelVisible: filter.isConstrained,
+        smallSize: 8,
+        child: FloatingActionButton(
+          heroTag: 'filter_fab',
+          tooltip: 'Search & Filters',
+          onPressed: _openFilters,
+          backgroundColor: theme.colorScheme.surface,
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: theme.dividerColor),
+          ),
+          child: const Icon(Icons.tune_rounded, size: 22),
+        ),
+      ),
     );
   }
 
@@ -514,26 +471,53 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        height: 1.25,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (item.priority > 0) ...[
+                          Icon(
+                            item.priority == 2 ? Icons.star_rounded : Icons.bookmark_rounded,
+                            size: 16,
+                            color: item.priority == 2 ? Colors.amber.shade700 : theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Expanded(
+                          child: Text(
+                            item.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     if (item.aiSummary != null && item.aiSummary!.isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      Text(
-                        '✨ ${item.aiSummary}',
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 11.5,
-                          fontStyle: FontStyle.italic,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.auto_awesome,
+                            size: 13,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              item.aiSummary!,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                                fontSize: 11.5,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                     const SizedBox(height: 6),
@@ -646,12 +630,22 @@ class _Thumb extends StatelessWidget {
                   color: fallbackFg,
                 ),
               )
-            : Image.network(
-                effectiveUrl,
+            : CachedNetworkImage(
+                imageUrl: effectiveUrl,
                 fit: BoxFit.cover,
-                cacheWidth: 156,
-                cacheHeight: 156,
-                errorBuilder: (context, error, stackTrace) => Container(
+                memCacheWidth: 156,
+                memCacheHeight: 156,
+                placeholder: (context, url) => Container(
+                  color: fallbackBg,
+                  child: const Center(
+                    child: SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 1.5),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
                   color: fallbackBg,
                   child: Icon(
                     Icons.language_rounded,

@@ -95,13 +95,21 @@ class ApiClient {
 
   Future<Map<String, dynamic>> patchSave({
     required String id,
-    required String? collectionId,
+    String? collectionId,
+    int? priority,
   }) async {
     final cleanCollectionId = (collectionId == null || collectionId == 'global') ? null : collectionId;
+    final Map<String, dynamic> data = {};
+    if (collectionId != null) {
+      data['collection_id'] = cleanCollectionId;
+    }
+    if (priority != null) {
+      data['priority'] = priority;
+    }
     try {
       final response = await _dio.patch<Map<String, dynamic>>(
         'api/saves/$id',
-        data: {'collection_id': cleanCollectionId},
+        data: data,
       );
       return response.data!;
     } on DioException catch (error) {

@@ -342,6 +342,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             });
           },
         ),
+        const SizedBox(height: 28),
+        const LaterSectionTitle(icon: Icons.cleaning_services_rounded, title: 'Cache & Storage'),
+        const SizedBox(height: 6),
+        Text('Manage locally cached link previews and thumbnail images.', style: theme.textTheme.bodyMedium),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: () {
+            PaintingBinding.instance.imageCache.clear();
+            PaintingBinding.instance.imageCache.clearLiveImages();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('App cache cleared successfully!'),
+              ),
+            );
+          },
+          icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+          label: const Text('Clear Image Cache'),
+        ),
         if (loggedIn) ...[
           const SizedBox(height: 36),
           const LaterSectionTitle(icon: Icons.person_outline, title: 'Session'),

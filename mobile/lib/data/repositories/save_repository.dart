@@ -134,6 +134,26 @@ class SaveRepository {
     }
   }
 
+  Future<void> setPriority(SaveItem item, int priority) async {
+    final next = item.copyWith(
+      priority: priority,
+      updatedAt: DateTime.now().toUtc(),
+    );
+    await _update(next);
+    try {
+      await api.patchSave(id: item.id, priority: priority);
+      await _update(next.copyWith(
+        syncStatus: SyncStatus.synced,
+        clearSyncError: true,
+      ));
+    } on ApiException catch (error) {
+      await _update(next.copyWith(
+        syncStatus: SyncStatus.syncFailed,
+        syncError: error.message,
+      ));
+    }
+  }
+
   Future<void> delete(SaveItem item) async {
     if (item.syncStatus == SyncStatus.pendingSync && item.deletedAt == null) {
       // Never reached the server: drop locally.
@@ -178,25 +198,28 @@ class SaveRepository {
           if (local != null && local.deletedAt != null) {
             continue;
           }
-          final rawTags = json['ai_tags'];
-          final List<String> parsedTags = rawTags is List ? rawTags.cast<String>() : [];
-          final item = SaveItem(
-            id: id,
-            url: json['url'] as String,
-            title: (json['title'] as String?) ?? json['url'] as String,
-            imageUrl: json['image_url'] as String?,
-            aiSummary: json['ai_summary'] as String?,
-            category: json['category'] as String?,
-            aiTags: parsedTags,
-            collectionId: json['collection_id'] as String?,
-            contentStatus: _contentStatus(json['content_status'] as String?),
-            syncStatus: SyncStatus.synced,
-            createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
-                DateTime.now().toUtc(),
-          );
-          if (local == null) {
-            await db.into(db.saves).insert(_toCompanion(item));
-          } else {
+          final remoteUpdated = DateTime.tryParse(json['updated_at'] as String? ?? '')?.toUtc();
+          if (local == null ||
+              remoteUpdated == null ||
+              local.updatedAt == null ||
+              remoteUpdated.isAfter(local.updatedAt!)) {
+            final rawTags = json['ai_tags'];
+            final List<String> parsedTags = rawTags is List ? rawTags.cast<String>() : [];
+            final item = SaveItem(
+              id: id,
+              url: json['url'] as String,
+              title: json['title'] as String,
+              imageUrl: json['image_url'] as String?,
+              aiSummary: json['ai_summary'] as String?,
+              category: json['category'] as String?,
+              priority: (json['priority'] as int?) ?? 0,
+              aiTags: parsedTags.isNotEmpty ? parsedTags : (local != null ? _toItem(local).aiTags : const []),
+              collectionId: json['collection_id'] as String?,
+              contentStatus: _contentStatus(json['content_status'] as String?),
+              syncStatus: SyncStatus.synced,
+              createdAt: DateTime.parse(json['created_at'] as String).toUtc(),
+              updatedAt: remoteUpdated,
+            );
             await _update(item);
           }
         }
@@ -245,6 +268,7 @@ class SaveRepository {
       imageUrl: row.imageUrl,
       aiSummary: row.aiSummary,
       category: row.category,
+      priority: row.priority,
       aiTags: tagsList,
       collectionId: row.collectionId,
       contentStatus: _contentStatus(row.contentStatus),
@@ -276,6 +300,7 @@ class SaveRepository {
       imageUrl: Value(item.imageUrl),
       aiSummary: Value(item.aiSummary),
       category: Value(item.category),
+      priority: Value(item.priority),
       aiTags: Value(item.aiTags.isNotEmpty ? item.aiTags.join(',') : null),
       collectionId: Value(item.collectionId),
       contentStatus: Value(switch (item.contentStatus) {

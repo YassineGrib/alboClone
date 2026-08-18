@@ -125,7 +125,14 @@ class SaveController extends Controller
             return response()->json(['message' => 'Not found'], 404);
         }
 
-        $save->collection_id = $request->input('collection_id');
+        if ($request->has('priority')) {
+            $save->priority = $request->integer('priority');
+        }
+
+        if ($request->has('collection_id')) {
+            $save->collection_id = $request->input('collection_id');
+        }
+
         $save->save();
 
         return response()->json($this->payload($save));
@@ -162,6 +169,7 @@ class SaveController extends Controller
             'image_url' => $save->image_url,
             'ai_summary' => $save->ai_summary,
             'category' => $save->category,
+            'priority' => (int) ($save->priority ?? 0),
             'ai_tags' => $save->ai_tags ?? [],
             'content_status' => $save->content_status,
             'collection_id' => $save->collection_id,

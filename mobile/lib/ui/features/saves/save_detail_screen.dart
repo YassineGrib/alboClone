@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -55,6 +56,11 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('URL copied to clipboard!')),
     );
+  }
+
+  Future<void> _setPriority(int priority) async {
+    setState(() => _item = _item.copyWith(priority: priority));
+    await ref.read(saveRepositoryProvider).setPriority(_item, priority);
   }
 
   Future<void> _move() async {
@@ -175,12 +181,17 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
                       color: theme.colorScheme.surfaceContainerHighest,
-                      child: Image.network(
-                        effectiveHeaderUrl,
+                      child: CachedNetworkImage(
+                        imageUrl: effectiveHeaderUrl,
                         height: 180,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                        placeholder: (context, url) => Container(
+                          height: 180,
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        ),
+                        errorWidget: (context, error, stackTrace) => const SizedBox.shrink(),
                       ),
                     ),
                   ),
@@ -197,7 +208,7 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Source & Category Badges
+                // Source & Category Badges & Importance
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -237,6 +248,53 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                     // Sync Status Badge
                     SyncChip(status: _item.syncStatus),
                   ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Importance / Priority Level
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: _item.priority == 2
+                          ? Colors.amber.withValues(alpha: 0.6)
+                          : theme.dividerColor,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _item.priority == 2
+                            ? Icons.star_rounded
+                            : (_item.priority == 1 ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+                        color: _item.priority == 2
+                            ? Colors.amber.shade700
+                            : (_item.priority == 1 ? theme.colorScheme.primary : theme.colorScheme.secondary),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Importance',
+                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const Spacer(),
+                      SegmentedButton<int>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(value: 0, label: Text('Normal')),
+                          ButtonSegment(value: 1, label: Text('Medium')),
+                          ButtonSegment(value: 2, label: Text('High'), icon: Icon(Icons.star_rounded, size: 16, color: Colors.amber)),
+                        ],
+                        selected: {_item.priority},
+                        onSelectionChanged: (val) {
+                          _setPriority(val.first);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 20),

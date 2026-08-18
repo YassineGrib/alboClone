@@ -29,6 +29,7 @@ class StoreSaveRequest extends FormRequest
             'url' => ['required', 'url', 'max:2048'],
             'title' => ['required', 'string'],
             'created_at' => ['sometimes', 'date'],
+            'priority' => ['sometimes', 'integer', 'min:0', 'max:2'],
             'collection_id' => [
                 'nullable',
                 'uuid',

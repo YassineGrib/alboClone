@@ -29,6 +29,10 @@ class CollectionScope {
 
 enum SaveWhen { any, today, yesterday, last7, last30 }
 
+enum SaveSort { importanceFirst, newestFirst, oldestFirst }
+
+enum PriorityFilter { all, importantOnly }
+
 class SaveFilter {
   const SaveFilter({
     this.query = '',
@@ -37,6 +41,8 @@ class SaveFilter {
     this.when = SaveWhen.any,
     this.appId,
     this.category,
+    this.sort = SaveSort.newestFirst,
+    this.priorityFilter = PriorityFilter.all,
   });
 
   final String query;
@@ -45,13 +51,18 @@ class SaveFilter {
   final SaveWhen when;
   final String? appId;
   final String? category;
+  final SaveSort sort;
+  final PriorityFilter priorityFilter;
 
   bool get isConstrained {
-    return collection != const CollectionScope.all() ||
+    return query.isNotEmpty ||
+        collection != const CollectionScope.all() ||
         status != null ||
         when != SaveWhen.any ||
         appId != null ||
-        category != null;
+        category != null ||
+        sort != SaveSort.newestFirst ||
+        priorityFilter != PriorityFilter.all;
   }
 
   SaveFilter copyWith({
@@ -61,6 +72,8 @@ class SaveFilter {
     SaveWhen? when,
     String? appId,
     String? category,
+    SaveSort? sort,
+    PriorityFilter? priorityFilter,
     bool clearStatus = false,
     bool clearApp = false,
     bool clearCategory = false,
@@ -72,11 +85,13 @@ class SaveFilter {
       when: when ?? this.when,
       appId: clearApp ? null : (appId ?? this.appId),
       category: clearCategory ? null : (category ?? this.category),
+      sort: sort ?? this.sort,
+      priorityFilter: priorityFilter ?? this.priorityFilter,
     );
   }
 
   SaveFilter clearAdvanced() {
-    return SaveFilter(query: query);
+    return const SaveFilter();
   }
 }
 
@@ -91,12 +106,16 @@ class SaveQuery {
     final today = SaveTimeline.dayOf(clock);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    return saves.where((item) {
+    final filtered = saves.where((item) {
       if (needle.isNotEmpty) {
-        final haystack = '${item.title} ${item.url}'.toLowerCase();
+        final haystack = '${item.title} ${item.url} ${item.aiSummary ?? ''}'.toLowerCase();
         if (!haystack.contains(needle)) {
           return false;
         }
+      }
+
+      if (filter.priorityFilter == PriorityFilter.importantOnly && !item.isImportant) {
+        return false;
       }
 
       if (filter.status != null && item.contentStatus != filter.status) {
@@ -132,5 +151,20 @@ class SaveQuery {
           return item.collectionId == filter.collection.id;
       }
     }).toList();
+
+    filtered.sort((a, b) {
+      switch (filter.sort) {
+        case SaveSort.importanceFirst:
+          final p = b.priority.compareTo(a.priority);
+          if (p != 0) return p;
+          return b.createdAt.compareTo(a.createdAt);
+        case SaveSort.newestFirst:
+          return b.createdAt.compareTo(a.createdAt);
+        case SaveSort.oldestFirst:
+          return a.createdAt.compareTo(b.createdAt);
+      }
+    });
+
+    return filtered;
   }
 }
