@@ -6,9 +6,11 @@ use App\Http\Controllers\Api\SaveController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::post('/register', [AuthController::class, 'register'])->name('register');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::delete('/account', [AuthController::class, 'deleteAccount']);
     Route::get('/saves', [SaveController::class, 'index']);
     Route::post('/saves', [SaveController::class, 'store']);
     Route::post('/saves/auto-organize', [SaveController::class, 'autoOrganize']);

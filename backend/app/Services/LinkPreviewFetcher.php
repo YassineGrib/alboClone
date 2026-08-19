@@ -23,23 +23,19 @@ class LinkPreviewFetcher
             }
         }
 
-        try {
-            $response = Http::timeout(8)
-                ->withoutVerifying()
-                ->withHeaders([
-                    'User-Agent' => 'LaterBot/1.0 (+https://later.local)',
-                    'Accept' => 'text/html,application/xhtml+xml',
-                ])
-                ->get($url);
+        $response = Http::timeout(8)
+            ->withoutVerifying()
+            ->withHeaders([
+                'User-Agent' => 'LaterBot/1.0 (+https://later.local)',
+                'Accept' => 'text/html,application/xhtml+xml',
+            ])
+            ->get($url);
 
-            if ($response->successful()) {
-                return LinkPreview::fromHtml((string) $response->body(), $url);
-            }
-        } catch (\Throwable) {
-            // Fallback to title from URL
+        if ($response->successful()) {
+            return LinkPreview::fromHtml((string) $response->body(), $url);
         }
 
-        return new LinkPreview(title: $url, imageUrl: null);
+        throw new \RuntimeException("Failed to fetch link: HTTP {$response->status()}");
     }
 
     private function oembedEndpoint(string $url): ?string

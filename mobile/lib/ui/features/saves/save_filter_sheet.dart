@@ -30,13 +30,18 @@ class _SaveFilterSheetState extends ConsumerState<SaveFilterSheet> {
 
   IconData _categoryIcon(String name) {
     return switch (name.toLowerCase()) {
+      'tech' => Icons.code_rounded,
+      'design' => Icons.palette_outlined,
       'video' => Icons.play_circle_outline_rounded,
       'tool' => Icons.construction_rounded,
-      'post' => Icons.article_outlined,
+      'post' => Icons.chat_bubble_outline_rounded,
       'article' => Icons.menu_book_rounded,
       'recipe' => Icons.restaurant_rounded,
       'workout' => Icons.fitness_center_rounded,
       'product' => Icons.shopping_bag_outlined,
+      'place' => Icons.place_outlined,
+      'finance' => Icons.trending_up_rounded,
+      'inspiration' => Icons.lightbulb_outline_rounded,
       _ => Icons.folder_outlined,
     };
   }

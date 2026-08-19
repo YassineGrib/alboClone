@@ -28,7 +28,7 @@ class LinkPreviewTest extends TestCase
         $preview = LinkPreview::fromHtml($html, 'https://example.com/x');
 
         $this->assertSame('Plain title', $preview->title);
-        $this->assertNull($preview->imageUrl);
+        $this->assertSame('https://www.google.com/s2/favicons?domain=example.com&sz=128', $preview->imageUrl);
     }
 
     public function test_resolves_relative_image_urls(): void

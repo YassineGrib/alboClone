@@ -79,7 +79,12 @@ class SaveController extends Controller
         ]);
 
         $aiEnabled = $request->boolean('ai_enabled', true);
-        ParseSaveJob::dispatch($save->id, $aiEnabled)->afterResponse();
+        try {
+            ParseSaveJob::dispatchSync($save->id, $aiEnabled);
+            $save->refresh();
+        } catch (\Throwable) {
+            // Keep pending/fallback
+        }
 
         return response()->json($this->payload($save));
     }

@@ -26,9 +26,41 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Log in'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Log in'));
     await tester.pump();
 
     expect(find.text('Enter email and password.'), findsOneWidget);
+  });
+
+  testWidgets('switching to register mode shows name field and validates inputs', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+        ],
+        child: MaterialApp(
+          theme: LaterTheme.light(),
+          home: const LoginScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap Create account
+    await tester.tap(find.text('Create account'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Create account'), findsOneWidget);
+
+    // Try submit empty
+    await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
+    await tester.pump();
+
+    expect(find.text('Enter name, email and password.'), findsOneWidget);
   });
 }

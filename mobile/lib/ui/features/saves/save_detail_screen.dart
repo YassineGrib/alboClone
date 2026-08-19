@@ -168,12 +168,20 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _openLink,
+        icon: const Icon(Icons.open_in_new_rounded),
+        label: const Text(
+          'Open Link',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
       body: Stack(
         children: [
           const Positioned.fill(child: LaterMarkPattern()),
           Positioned.fill(
             child: ListView(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 88),
               children: [
                 // Header Image Thumbnail
                 if (effectiveHeaderUrl != null) ...[
@@ -208,7 +216,7 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Source & Category Badges & Importance
+                // Source & Category Badges
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -252,52 +260,10 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
 
                 const SizedBox(height: 16),
 
-                // Importance / Priority Level
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _item.priority == 2
-                          ? Colors.amber.withValues(alpha: 0.6)
-                          : theme.dividerColor,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _item.priority == 2
-                            ? Icons.star_rounded
-                            : (_item.priority == 1 ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
-                        color: _item.priority == 2
-                            ? Colors.amber.shade700
-                            : (_item.priority == 1 ? theme.colorScheme.primary : theme.colorScheme.secondary),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Importance',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      const Spacer(),
-                      SegmentedButton<int>(
-                        showSelectedIcon: false,
-                        segments: const [
-                          ButtonSegment(value: 0, label: Text('Normal')),
-                          ButtonSegment(value: 1, label: Text('Medium')),
-                          ButtonSegment(value: 2, label: Text('High'), icon: Icon(Icons.star_rounded, size: 16, color: Colors.amber)),
-                        ],
-                        selected: {_item.priority},
-                        onSelectionChanged: (val) {
-                          _setPriority(val.first);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
+                // Refined Importance / Priority Widget UI
+                _buildImportanceWidget(theme),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 // AI Summary Section (AI Summarize Display)
                 Card(
@@ -339,23 +305,7 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
-
-                // Direct Link Button
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  onPressed: _openLink,
-                  icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text(
-                    'Open Link',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
 
                 // AI Tags
                 if (_item.aiTags.isNotEmpty) ...[
@@ -377,7 +327,7 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                         )
                         .toList(),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                 ],
 
                 // Metadata Details Card
@@ -420,6 +370,88 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImportanceWidget(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _item.priority == 2
+              ? Colors.amber.withValues(alpha: 0.7)
+              : (_item.priority == 1 ? theme.colorScheme.primary.withValues(alpha: 0.4) : theme.dividerColor),
+          width: _item.priority > 0 ? 1.5 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                _item.priority == 2
+                    ? Icons.star_rounded
+                    : (_item.priority == 1 ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+                color: _item.priority == 2
+                    ? Colors.amber.shade700
+                    : (_item.priority == 1 ? theme.colorScheme.primary : theme.colorScheme.secondary),
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Importance / Priority',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const Spacer(),
+              if (_item.priority == 2)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'High Priority',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.amber.shade900),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<int>(
+              expandedInsets: EdgeInsets.zero,
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                  value: 0,
+                  label: Text('Normal'),
+                  icon: Icon(Icons.radio_button_unchecked, size: 14),
+                ),
+                ButtonSegment(
+                  value: 1,
+                  label: Text('Medium'),
+                  icon: Icon(Icons.bookmark_outlined, size: 14),
+                ),
+                ButtonSegment(
+                  value: 2,
+                  label: Text('High'),
+                  icon: Icon(Icons.star_rounded, size: 16, color: Colors.amber),
+                ),
+              ],
+              selected: {_item.priority},
+              onSelectionChanged: (val) => _setPriority(val.first),
             ),
           ),
         ],

@@ -180,39 +180,62 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: Row(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _url,
-                          focusNode: _urlFocus,
-                          keyboardType: TextInputType.url,
-                          textInputAction: TextInputAction.go,
-                          decoration: InputDecoration(
-                            hintText: 'Paste a link to save...',
-                            prefixIcon: Icon(
-                              Icons.link_rounded,
-                              size: 20,
-                              color: theme.colorScheme.secondary,
+                      SizedBox(
+                        height: 48,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _url,
+                                focusNode: _urlFocus,
+                                keyboardType: TextInputType.url,
+                                textInputAction: TextInputAction.go,
+                                textAlignVertical: TextAlignVertical.center,
+                                decoration: InputDecoration(
+                                  hintText: 'Paste a link to save...',
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  prefixIcon: Icon(
+                                    Icons.link_rounded,
+                                    size: 20,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                ),
+                                onSubmitted: (_) => _add(),
+                              ),
                             ),
-                            errorText: _fieldError,
+                            const SizedBox(width: 8),
+                            SizedBox(
+                              width: 48,
+                              child: IconButton(
+                                tooltip: 'Add link',
+                                onPressed: _add,
+                                style: IconButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: theme.colorScheme.onPrimary,
+                                  shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                                  padding: EdgeInsets.zero,
+                                ),
+                                icon: const Icon(Icons.add_rounded, size: 22),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_fieldError != null) ...[
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Text(
+                            _fieldError!,
+                            style: const TextStyle(color: LaterColors.chipFailedFg, fontSize: 12),
                           ),
-                          onSubmitted: (_) => _add(),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: 'Add link',
-                        onPressed: _add,
-                        style: IconButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                          minimumSize: const Size(52, 52),
-                        ),
-                        icon: const Icon(Icons.add_rounded),
-                      ),
+                      ],
                     ],
                   ),
                 ),

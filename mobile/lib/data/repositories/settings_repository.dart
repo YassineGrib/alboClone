@@ -9,7 +9,12 @@ class SettingsRepository {
   static const themeKey = 'later.themeMode';
   static const pendingShareKey = 'later.pendingShare';
   static const languageKey = 'later.app_language';
-  static const defaultApi = 'http://127.0.0.1:8080';
+  static const welcomeSeenKey = 'later.welcomeSeen';
+  static const defaultApi = 'https://later-dz.site';
+
+  bool hasSeenWelcome() => prefs.getBool(welcomeSeenKey) ?? false;
+
+  Future<void> setHasSeenWelcome(bool seen) => prefs.setBool(welcomeSeenKey, seen);
 
   String apiBaseUrl() => prefs.getString(apiKey) ?? defaultApi;
 

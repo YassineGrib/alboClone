@@ -6,6 +6,7 @@ import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/features/auth/login_screen.dart';
 import 'package:later/ui/features/saves/saves_screen.dart';
 import 'package:later/ui/features/saves/share_listener.dart';
+import 'package:later/ui/features/welcome/welcome_screen.dart';
 
 class LaterApp extends ConsumerWidget {
   const LaterApp({super.key});
@@ -15,7 +16,17 @@ class LaterApp extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
     final token = ref.watch(authTokenProvider);
     final lang = ref.watch(appLanguageProvider);
+    final hasSeenWelcome = ref.watch(welcomeSeenProvider);
     final locale = lang == 'system' ? null : Locale(lang);
+
+    final Widget homeWidget;
+    if (!hasSeenWelcome) {
+      homeWidget = const WelcomeScreen();
+    } else if (token == null) {
+      homeWidget = const LoginScreen();
+    } else {
+      homeWidget = const SavesScreen();
+    }
 
     return MaterialApp(
       title: 'Later',
@@ -36,7 +47,7 @@ class LaterApp extends ConsumerWidget {
       darkTheme: LaterTheme.dark(),
       themeMode: mode,
       builder: (context, child) => ShareListener(child: child ?? const SizedBox.shrink()),
-      home: token == null ? const LoginScreen() : const SavesScreen(),
+      home: homeWidget,
     );
   }
 }

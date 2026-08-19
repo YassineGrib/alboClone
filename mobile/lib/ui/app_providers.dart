@@ -21,6 +21,21 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository(ref.watch(sharedPreferencesProvider));
 });
 
+final welcomeSeenProvider = StateNotifierProvider<WelcomeSeenController, bool>((ref) {
+  return WelcomeSeenController(ref.watch(settingsRepositoryProvider));
+});
+
+class WelcomeSeenController extends StateNotifier<bool> {
+  WelcomeSeenController(this._settings) : super(_settings.hasSeenWelcome());
+
+  final SettingsRepository _settings;
+
+  Future<void> completeWelcome() async {
+    await _settings.setHasSeenWelcome(true);
+    state = true;
+  }
+}
+
 final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
   return ThemeModeController(ref.watch(settingsRepositoryProvider));
 });

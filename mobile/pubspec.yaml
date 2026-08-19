@@ -69,6 +69,7 @@ flutter:
   assets:
     - assets/brand/mark.svg
     - assets/brand/wordmark.svg
+    - assets/brand/logowithtext.svg
 
 flutter_launcher_icons:
   android: true

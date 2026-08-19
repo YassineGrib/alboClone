@@ -37,6 +37,18 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> register(String name, String email, String password) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        'api/register',
+        data: {'name': name, 'email': email, 'password': password},
+      );
+      return response.data!;
+    } on DioException catch (error) {
+      throw _map(error);
+    }
+  }
+
   Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await _dio.post<Map<String, dynamic>>(
@@ -52,6 +64,14 @@ class ApiClient {
   Future<void> logout() async {
     try {
       await _dio.post<void>('api/logout');
+    } on DioException catch (error) {
+      throw _map(error);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    try {
+      await _dio.delete<void>('api/account');
     } on DioException catch (error) {
       throw _map(error);
     }

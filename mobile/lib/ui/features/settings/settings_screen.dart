@@ -7,6 +7,7 @@ import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 import 'package:later/ui/core/widgets/sync_chip.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -15,8 +16,9 @@ class SettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTickerProviderStateMixin {
   late final TextEditingController _api;
+  late final TabController _tabController;
   String? _apiError;
   bool _isTestingConnection = false;
   bool? _connectionSuccess;
@@ -27,11 +29,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void initState() {
     super.initState();
     _api = TextEditingController(text: ref.read(apiBaseUrlProvider));
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
   void dispose() {
     _api.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -112,37 +116,85 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _deleteAccount() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account & Data?'),
+        content: const Text(
+          'This will permanently delete your account, authentication tokens, and all saved links and folders from our servers. This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: LaterColors.chipFailedFg),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await ref.read(authRepositoryProvider).deleteAccount();
+        ref.read(authTokenProvider.notifier).setToken(null);
+        if (mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account and all data deleted.')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete account: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _openExternalUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Settings'),
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(Icons.tune_outlined), text: 'General'),
-              Tab(icon: Icon(Icons.auto_awesome_outlined), text: 'Gemini AI'),
-              Tab(icon: Icon(Icons.help_outline_rounded), text: 'Guide'),
-            ],
-          ),
-        ),
-        body: Stack(
-          children: [
-            const Positioned.fill(child: LaterMarkPattern()),
-            Positioned.fill(
-              child: TabBarView(
-                children: [
-                  _buildGeneralTab(context, theme),
-                  _buildAiTab(context, theme),
-                  _buildGuideTab(context, theme),
-                ],
-              ),
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.tune_outlined), text: 'General'),
+            Tab(icon: Icon(Icons.auto_awesome_outlined), text: 'Gemini AI'),
+            Tab(icon: Icon(Icons.help_outline_rounded), text: 'Guide'),
           ],
         ),
+      ),
+      body: Stack(
+        children: [
+          const Positioned.fill(child: LaterMarkPattern()),
+          Positioned.fill(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildGeneralTab(context, theme),
+                _buildAiTab(context, theme),
+                _buildGuideTab(context, theme),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -176,7 +228,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           autocorrect: false,
           textInputAction: TextInputAction.done,
           decoration: InputDecoration(
-            hintText: 'http://192.168.1.123:8080',
+            hintText: 'https://later-dz.site',
             prefixIcon: const LaterInputIcon(Icons.link_outlined),
             errorText: _apiError,
             errorMaxLines: 3,
@@ -360,25 +412,74 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           icon: const Icon(Icons.delete_sweep_rounded, size: 18),
           label: const Text('Clear Image Cache'),
         ),
-        if (loggedIn) ...[
-          const SizedBox(height: 36),
-          const LaterSectionTitle(icon: Icons.person_outline, title: 'Session'),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              foregroundColor: LaterColors.chipFailedFg,
-              side: const BorderSide(color: LaterColors.chipFailedFg),
-            ),
-            onPressed: _logout,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
+        const SizedBox(height: 28),
+        const LaterSectionTitle(icon: Icons.shield_outlined, title: 'Legal & Privacy'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
               children: [
-                Icon(Icons.logout_outlined, size: 18),
-                SizedBox(width: 8),
-                Text('Log out'),
+                ListTile(
+                  leading: const Icon(Icons.privacy_tip_outlined, size: 20),
+                  title: const Text('Privacy Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  subtitle: const Text('https://later-dz.site/privacy', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 16),
+                  onTap: () => _openExternalUrl('https://later-dz.site/privacy'),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.description_outlined, size: 20),
+                  title: const Text('Terms of Service', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  subtitle: const Text('https://later-dz.site/terms', style: TextStyle(fontSize: 12)),
+                  trailing: const Icon(Icons.open_in_new_rounded, size: 16),
+                  onTap: () => _openExternalUrl('https://later-dz.site/terms'),
+                ),
+                const Divider(height: 1),
+                const ListTile(
+                  leading: Icon(Icons.lock_outline_rounded, size: 20),
+                  title: Text('Data Safety & Encryption', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                  subtitle: Text('All data is transmitted via TLS / HTTPS', style: TextStyle(fontSize: 12)),
+                ),
               ],
             ),
+          ),
+        ),
+        if (loggedIn) ...[
+          const SizedBox(height: 36),
+          const LaterSectionTitle(icon: Icons.person_outline, title: 'Session & Account'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _logout,
+                  icon: const Icon(Icons.logout_outlined, size: 18),
+                  label: const Text('Log out'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: LaterColors.chipFailedFg,
+                    side: const BorderSide(color: LaterColors.chipFailedFg),
+                  ),
+                  onPressed: _deleteAccount,
+                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                  label: const Text('Delete Account & Data'),
+                ),
+              ),
+            ],
           ),
         ],
       ],

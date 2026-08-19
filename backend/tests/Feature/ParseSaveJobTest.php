@@ -25,7 +25,7 @@ class ParseSaveJobTest extends TestCase
 
         $save = $this->makeSave('https://example.com/recipe');
 
-        ParseSaveJob::dispatchSync($save->id);
+        ParseSaveJob::dispatchSync($save->id, aiEnabled: false);
 
         $save->refresh();
         $this->assertSame('ready', $save->content_status);
@@ -41,7 +41,7 @@ class ParseSaveJobTest extends TestCase
 
         $save = $this->makeSave('https://example.com/gone');
 
-        ParseSaveJob::dispatchSync($save->id);
+        ParseSaveJob::dispatchSync($save->id, aiEnabled: false);
 
         $save->refresh();
         $this->assertSame('failed', $save->content_status);
@@ -59,7 +59,7 @@ class ParseSaveJobTest extends TestCase
 
         $save = $this->makeSave('https://www.youtube.com/watch?v=abc');
 
-        ParseSaveJob::dispatchSync($save->id);
+        ParseSaveJob::dispatchSync($save->id, aiEnabled: false);
 
         $save->refresh();
         $this->assertSame('ready', $save->content_status);

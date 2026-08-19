@@ -15,6 +15,12 @@ class LaterLogo extends StatelessWidget {
     this.alignment = Alignment.centerLeft,
   }) : asset = LaterAssets.wordmark;
 
+  const LaterLogo.full({
+    super.key,
+    this.height = 100,
+    this.alignment = Alignment.center,
+  }) : asset = LaterAssets.logowithtext;
+
   final String asset;
   final double height;
   final AlignmentGeometry alignment;

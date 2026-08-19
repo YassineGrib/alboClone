@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:later/data/repositories/auth_repository.dart';
 import 'package:later/data/repositories/settings_repository.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
@@ -116,8 +117,58 @@ void main() {
     await tester.scrollUntilVisible(
       find.text('Language'),
       200,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
     );
     expect(find.text('Language'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Legal & Privacy'),
+      200,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
+    );
+    expect(find.text('Legal & Privacy'), findsOneWidget);
+    expect(find.text('Privacy Policy'), findsOneWidget);
+    expect(find.text('Terms of Service'), findsOneWidget);
+    expect(find.text('Data Safety & Encryption'), findsOneWidget);
+  });
+
+  testWidgets('shows Delete Account button and dialog when logged in', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({AuthRepository.tokenKey: 'test_token'});
+    final prefs = await SharedPreferences.getInstance();
+
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+    );
+    container.read(authTokenProvider.notifier).setToken('test_token');
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          theme: LaterTheme.light(),
+          home: const SettingsScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Delete Account & Data'),
+      300,
+      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
+    );
+    expect(find.text('Delete Account & Data'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Delete Account & Data'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Delete Account & Data'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Delete Account & Data?'), findsOneWidget);
+    expect(find.textContaining('This will permanently delete your account'), findsOneWidget);
   });
 }

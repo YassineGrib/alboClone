@@ -13,6 +13,13 @@ class AuthRepository {
 
   Future<String?> token() => storage.read(key: tokenKey);
 
+  Future<void> register(String name, String email, String password) async {
+    final client = ApiClient(baseUrl: baseUrl);
+    final data = await client.register(name, email, password);
+    final token = data['token'] as String;
+    await storage.write(key: tokenKey, value: token);
+  }
+
   Future<void> login(String email, String password) async {
     final client = ApiClient(baseUrl: baseUrl);
     final data = await client.login(email, password);
@@ -25,6 +32,18 @@ class AuthRepository {
     if (current != null) {
       try {
         await ApiClient(baseUrl: baseUrl, token: current).logout();
+      } on ApiException {
+        // still clear local session
+      }
+    }
+    await storage.delete(key: tokenKey);
+  }
+
+  Future<void> deleteAccount() async {
+    final current = await token();
+    if (current != null) {
+      try {
+        await ApiClient(baseUrl: baseUrl, token: current).deleteAccount();
       } on ApiException {
         // still clear local session
       }
