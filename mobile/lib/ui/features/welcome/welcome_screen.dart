@@ -6,6 +6,22 @@ import 'package:later/ui/core/theme/later_assets.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 
+class OnboardingSlide {
+  const OnboardingSlide({
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.tags,
+    this.highlightIcon = false,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final List<String> tags;
+  final bool highlightIcon;
+}
+
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -13,63 +29,53 @@ class WelcomeScreen extends ConsumerStatefulWidget {
   ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _logoScale;
-  late final Animation<double> _logoFade;
-  late final Animation<double> _contentSlide;
-  late final Animation<double> _contentFade;
-  late final Animation<double> _glowAnimation;
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-
-    _logoFade = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 0.45, curve: Curves.easeOut),
-    );
-
-    _logoScale = Tween<double>(begin: 0.82, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.55, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _glowAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.2, 0.7, curve: Curves.easeInOut),
-      ),
-    );
-
-    _contentFade = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.4, 0.9, curve: Curves.easeOut),
-    );
-
-    _contentSlide = Tween<double>(begin: 24.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.4, 0.9, curve: Curves.easeOutCubic),
-      ),
-    );
-
-    _controller.forward();
-  }
+  static const List<OnboardingSlide> _slides = [
+    OnboardingSlide(
+      title: 'Share From Any App',
+      description:
+          'Save links, videos, recipes, or articles directly from TikTok, Instagram, YouTube, or your browser in one tap.',
+      icon: Icons.share_rounded,
+      tags: ['TikTok', 'Instagram', 'YouTube', 'Browser'],
+    ),
+    OnboardingSlide(
+      title: 'AI Summaries & Tags',
+      description:
+          'Automatic concise titles, AI summaries, and smart categorization powered by Gemini AI so you never lose context.',
+      icon: Icons.auto_awesome_rounded,
+      tags: ['Auto Titles', 'Smart Tags', 'Gemini AI'],
+      highlightIcon: true,
+    ),
+    OnboardingSlide(
+      title: 'Save Now, Read Calmly',
+      description:
+          'A serene, offline-first home for your saved bookmarks with collections, instant search, and location map pins.',
+      icon: Icons.bookmark_added_rounded,
+      tags: ['Offline First', 'Map Pins', 'Collections'],
+    ),
+  ];
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
-  void _onGetStarted() {
+  void _onNext() {
+    if (_currentPage < _slides.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
+      );
+    } else {
+      _completeWelcome();
+    }
+  }
+
+  void _completeWelcome() {
     ref.read(welcomeSeenProvider.notifier).completeWelcome();
   }
 
@@ -78,185 +84,108 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with SingleTicker
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final onSurface = theme.colorScheme.onSurface;
+    final isLastPage = _currentPage == _slides.length - 1;
 
     return Scaffold(
       body: Stack(
         children: [
           const Positioned.fill(child: LaterMarkPattern()),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-              child: Column(
-                children: [
-                  const Spacer(flex: 2),
-
-                  // Animated Hero Logo
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _logoFade.value,
-                        child: Transform.scale(
-                          scale: _logoScale.value,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Subtle background ambient aura
-                              Container(
-                                width: 220,
-                                height: 130,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: (isDark ? Colors.white : Colors.black)
-                                          .withValues(alpha: 0.04 * _glowAnimation.value),
-                                      blurRadius: 40,
-                                      spreadRadius: 20,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              SvgPicture.asset(
-                                LaterAssets.logowithtext,
-                                width: 240,
-                                height: 110,
-                                fit: BoxFit.contain,
-                                colorFilter: ColorFilter.mode(onSurface, BlendMode.srcIn),
-                                semanticsLabel: 'Later Logo',
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // Animated Core App Idea Pitch
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _contentFade.value,
-                        child: Transform.translate(
-                          offset: Offset(0, _contentSlide.value),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Column(
-                      children: [
-                        Text(
-                          'Save a link. Find it again.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'A quiet, minimalist home for your saved bookmarks.\nAutomated AI categorization, concise summaries, and offline-first peace of mind.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.secondary,
-                            height: 1.55,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const Spacer(flex: 3),
-
-                  // App Core Value Highlights
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _contentFade.value,
-                        child: Transform.translate(
-                          offset: Offset(0, _contentSlide.value * 0.7),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: theme.dividerColor),
+            child: Column(
+              children: [
+                // Top Header Bar with Logo and Skip
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      SvgPicture.asset(
+                        LaterAssets.logowithtext,
+                        height: 28,
+                        fit: BoxFit.contain,
+                        colorFilter: ColorFilter.mode(onSurface, BlendMode.srcIn),
+                        semanticsLabel: 'Later Logo',
                       ),
-                      child: Column(
+                      TextButton(
+                        onPressed: _completeWelcome,
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.secondary,
+                          textStyle: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        child: const Text('Skip'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Main Onboarding PageView
+                Expanded(
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() => _currentPage = index);
+                    },
+                    itemCount: _slides.length,
+                    itemBuilder: (context, index) {
+                      final slide = _slides[index];
+                      return _buildSlideCard(slide, theme, isDark);
+                    },
+                  ),
+                ),
+
+                // Page Indicator Dots
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_slides.length, (index) {
+                      final isActive = index == _currentPage;
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                        height: 8.0,
+                        width: isActive ? 24.0 : 8.0,
+                        decoration: BoxDecoration(
+                          color: isActive
+                              ? theme.colorScheme.primary
+                              : theme.dividerColor.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.circular(4.0),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+
+                // Bottom Action Button (Next / Get Started)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                      ),
+                      onPressed: _onNext,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _buildFeatureRow(
-                            icon: Icons.share_outlined,
-                            title: 'System Share Intake',
-                            subtitle: 'Send links from Instagram, TikTok, Browser, or X.',
-                            theme: theme,
+                          Text(
+                            isLastPage ? 'Get Started' : 'Next',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          Divider(height: 18, color: theme.dividerColor.withValues(alpha: 0.5)),
-                          _buildFeatureRow(
-                            icon: Icons.auto_awesome_rounded,
-                            title: 'Smart AI Enrichment',
-                            subtitle: 'Ultra-concise titles and automatic classification.',
-                            theme: theme,
-                            highlightIcon: true,
-                          ),
-                          Divider(height: 18, color: theme.dividerColor.withValues(alpha: 0.5)),
-                          _buildFeatureRow(
-                            icon: Icons.offline_bolt_outlined,
-                            title: 'Offline First',
-                            subtitle: 'Instant search, organize folders, and local storage.',
-                            theme: theme,
+                          const SizedBox(width: 8),
+                          Icon(
+                            isLastPage ? Icons.check_circle_outline_rounded : Icons.arrow_forward_rounded,
+                            size: 20,
                           ),
                         ],
                       ),
                     ),
                   ),
-
-                  const Spacer(flex: 2),
-
-                  // Get Started Action Button
-                  AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      return Opacity(
-                        opacity: _contentFade.value,
-                        child: Transform.translate(
-                          offset: Offset(0, _contentSlide.value * 0.5),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: FilledButton(
-                        style: FilledButton.styleFrom(
-                          shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                        ),
-                        onPressed: _onGetStarted,
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Get Started',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(width: 8),
-                            Icon(Icons.arrow_forward_rounded, size: 18),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -264,45 +193,101 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with SingleTicker
     );
   }
 
-  Widget _buildFeatureRow({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required ThemeData theme,
-    bool highlightIcon = false,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Icon(
-          icon,
-          size: 20,
-          color: highlightIcon ? Colors.amber.shade700 : theme.colorScheme.primary,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
+  Widget _buildSlideCard(OnboardingSlide slide, ThemeData theme, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Spacer(flex: 1),
+
+          // Slide Hero Icon Box
+          Container(
+            width: 110,
+            height: 110,
+            decoration: BoxDecoration(
+              color: slide.highlightIcon
+                  ? (isDark ? Colors.amber.shade900.withValues(alpha: 0.3) : Colors.amber.shade50)
+                  : theme.colorScheme.surface,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: slide.highlightIcon
+                    ? Colors.amber.shade700.withValues(alpha: 0.5)
+                    : theme.dividerColor,
+                width: 1.5,
               ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.secondary,
-                  fontSize: 11.5,
+              boxShadow: [
+                BoxShadow(
+                  color: (slide.highlightIcon ? Colors.amber : theme.colorScheme.primary)
+                      .withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  spreadRadius: 8,
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Icon(
+              slide.icon,
+              size: 48,
+              color: slide.highlightIcon ? Colors.amber.shade700 : theme.colorScheme.primary,
+            ),
           ),
-        ),
-      ],
+
+          const SizedBox(height: 32),
+
+          // Slide Title
+          Text(
+            slide.title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Slide Description
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              slide.description,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.secondary,
+                height: 1.55,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Feature Badges
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: slide.tags.map((tag) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: theme.dividerColor),
+                ),
+                child: Text(
+                  tag,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const Spacer(flex: 2),
+        ],
+      ),
     );
   }
 }

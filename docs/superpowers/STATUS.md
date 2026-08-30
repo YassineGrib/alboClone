@@ -1,8 +1,8 @@
 # Status
 
-**Stage:** finished (Google Auth slice)
+**Stage:** execute (Onboarding slice)
 
-**Active slice:** Later — Google Auth Login (Completed)
+**Active slice:** Later — Interactive 3-Slide Onboarding Carousel (Share Intake, AI Summaries, Save for Later)
 
 ## Run
 
