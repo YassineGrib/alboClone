@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CollectionController;
+use App\Http\Controllers\Api\GoogleAuthController;
 use App\Http\Controllers\Api\SaveController;
 use Illuminate\Support\Facades\Route;
 
+Route::post('/auth/google', [GoogleAuthController::class, 'googleLogin']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/register', [AuthController::class, 'register'])->name('register');
 

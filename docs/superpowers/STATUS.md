@@ -1,10 +1,8 @@
 # Status
 
-**Stage:** execute (Android share slice)
+**Stage:** finished (Google Auth slice)
 
-**Active slice:** Later — Share → Later on Android (`ACTION_SEND` text)
-
-iOS share extension is not in this slice. Rebuild the Android app so the intent filter is installed.
+**Active slice:** Later — Google Auth Login (Completed)
 
 ## Run
 
@@ -17,5 +15,3 @@ php artisan serve --host=0.0.0.0 --port=8080
 cd mobile
 flutter run
 ```
-
-Full restart, not hot reload. Then in Chrome/TikTok/etc: Share → Later.

@@ -27,6 +27,13 @@ class AuthRepository {
     await storage.write(key: tokenKey, value: token);
   }
 
+  Future<void> loginWithGoogle(String idToken) async {
+    final client = ApiClient(baseUrl: baseUrl);
+    final data = await client.googleLogin(idToken);
+    final token = data['token'] as String;
+    await storage.write(key: tokenKey, value: token);
+  }
+
   Future<void> logout() async {
     final current = await token();
     if (current != null) {

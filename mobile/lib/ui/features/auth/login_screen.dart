@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:later/data/services/api_client.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
@@ -25,6 +26,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   String? _error;
   bool _busy = false;
   bool _hidePassword = true;
+  int _logoTapCount = 0;
+  bool _showServer = false;
 
   @override
   void dispose() {
@@ -45,6 +48,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _email.clear();
       } else if (!registering && _email.text.isEmpty) {
         _email.text = 'you@local.test';
+      }
+    });
+  }
+
+  void _onLogoTap() {
+    setState(() {
+      _logoTapCount++;
+      if (_logoTapCount >= 3) {
+        _showServer = true;
       }
     });
   }
@@ -94,6 +106,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _googleSignIn() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final googleSignIn = GoogleSignIn(
+        serverClientId: '365151770587-2tte83j70ceop2f22g8ssir855nhadqv.apps.googleusercontent.com',
+        scopes: ['email', 'profile'],
+      );
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        return;
+      }
+      final auth = await account.authentication;
+      final idToken = auth.idToken;
+      if (idToken == null) {
+        setState(() => _error = 'Could not obtain Google ID token.');
+        return;
+      }
+      await ref.read(authRepositoryProvider).loginWithGoogle(idToken);
+      final token = await ref.read(authRepositoryProvider).token();
+      ref.read(authTokenProvider.notifier).setToken(token);
+    } on ApiException catch (error) {
+      final unreachable = error.message == "Couldn't reach the server.";
+      setState(() {
+        _error = unreachable
+            ? "Couldn't reach the server. Check the API URL in Settings."
+            : error.message;
+      });
+    } catch (error) {
+      setState(() => _error = 'Google Sign-In failed: $error');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   void _openServer() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
@@ -117,7 +166,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   padding: EdgeInsets.fromLTRB(24, 28, 24, 24 + bottom),
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   children: [
-                    const LaterLogo.wordmark(height: 52),
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _onLogoTap,
+                      child: const LaterLogo.wordmark(height: 52),
+                    ),
                     const SizedBox(height: 8),
                     Text('Save a link. Find it again.', style: theme.textTheme.bodySmall),
                     const SizedBox(height: 28),
@@ -242,44 +295,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ],
                             ),
                     ),
-                    const SizedBox(height: 32),
-
-                    Material(
-                      color: theme.colorScheme.surface,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: theme.dividerColor),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: _busy ? null : _googleSignIn,
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                      child: InkWell(
-                        onTap: _openServer,
-                        borderRadius: BorderRadius.circular(8),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                          child: Row(
-                            children: [
-                              const LaterInputIcon(Icons.dns_outlined),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Server', style: theme.textTheme.bodySmall),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      api,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodyMedium,
-                                    ),
-                                  ],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.g_mobiledata_rounded, size: 24),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Sign in with Google',
+                            style: theme.textTheme.labelLarge,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (_showServer) ...[
+                      const SizedBox(height: 36),
+                      Material(
+                        color: theme.colorScheme.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: theme.dividerColor),
+                        ),
+                        child: InkWell(
+                          onTap: _openServer,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                            child: Row(
+                              children: [
+                                const LaterInputIcon(Icons.dns_outlined),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Server', style: theme.textTheme.bodySmall),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        api,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Icon(Icons.chevron_right, color: theme.colorScheme.secondary),
-                            ],
+                                Icon(Icons.chevron_right, color: theme.colorScheme.secondary),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

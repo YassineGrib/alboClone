@@ -61,6 +61,18 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> googleLogin(String idToken) async {
+    try {
+      final response = await _dio.post<Map<String, dynamic>>(
+        'api/auth/google',
+        data: {'id_token': idToken},
+      );
+      return response.data!;
+    } on DioException catch (error) {
+      throw _map(error);
+    }
+  }
+
   Future<void> logout() async {
     try {
       await _dio.post<void>('api/logout');
@@ -207,6 +219,10 @@ class ApiClient {
       return ApiException("Couldn't reach the server.");
     }
     final status = error.response?.statusCode;
+    final data = error.response?.data;
+    if (data is Map && data['message'] != null) {
+      return ApiException(data['message'].toString(), statusCode: status);
+    }
     if (status == 401) {
       return ApiException('Unauthorized', statusCode: 401);
     }
