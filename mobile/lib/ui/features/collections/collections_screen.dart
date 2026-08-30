@@ -4,6 +4,7 @@ import 'package:later/data/services/api_client.dart';
 import 'package:later/domain/models/collection.dart';
 import 'package:later/domain/models/save_query.dart';
 import 'package:later/ui/app_providers.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 
 class CollectionsScreen extends ConsumerStatefulWidget {
@@ -55,9 +56,12 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Save'),
+            BouncyTap(
+              onTap: () => Navigator.of(context).pop(controller.text),
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: const Text('Save'),
+              ),
             ),
           ],
         );
@@ -89,9 +93,12 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
+            BouncyTap(
+              onTap: () => Navigator.of(context).pop(true),
+              child: FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
             ),
           ],
         );
@@ -142,86 +149,98 @@ class _CollectionsScreenState extends ConsumerState<CollectionsScreen> {
           Positioned.fill(
             child: Column(
               children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _name,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: InputDecoration(
-                      hintText: 'New folder',
-                      errorText: _fieldError,
-                    ),
-                    onSubmitted: (_) => _create(),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _name,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            hintText: 'New folder',
+                            errorText: _fieldError,
+                          ),
+                          onSubmitted: (_) => _create(),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      BouncyTap(
+                        onTap: _create,
+                        child: FilledButton(onPressed: _create, child: const Text('Add')),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: _create, child: const Text('Add')),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              onPressed: _isAutoOrganizing ? null : _autoOrganize,
-              icon: _isAutoOrganizing
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.amber),
-              label: Text(_isAutoOrganizing ? 'Organizing with AI...' : 'AI Auto-Organize into Folders'),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: folders.when(
-              data: (items) {
-                if (items.isEmpty) {
-                  return Center(
-                    child: Text(
-                      'Folders group saves you want together.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => Divider(height: 1, color: theme.dividerColor),
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return ListTile(
-                      title: Text(item.name),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, size: 20),
-                            onPressed: () => _rename(item),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 20),
-                            onPressed: () => _delete(item),
-                          ),
-                        ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: BouncyTap(
+                    onTap: _isAutoOrganizing ? null : _autoOrganize,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _isAutoOrganizing ? null : _autoOrganize,
+                        icon: _isAutoOrganizing
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.auto_awesome_rounded, size: 18, color: Colors.amber),
+                        label: Text(_isAutoOrganizing ? 'Organizing with AI...' : 'AI Auto-Organize into Folders'),
                       ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, _) => Center(child: Text('$error')),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: folders.when(
+                    data: (items) {
+                      if (items.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'Folders group saves you want together.',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        );
+                      }
+                      return ListView.separated(
+                        itemCount: items.length,
+                        separatorBuilder: (_, _) => Divider(height: 1, color: theme.dividerColor),
+                        itemBuilder: (context, index) {
+                          final item = items[index];
+                          return BouncyTap(
+                            onTap: () => _rename(item),
+                            child: ListTile(
+                              title: Text(item.name),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 20),
+                                    onPressed: () => _rename(item),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 20),
+                                    onPressed: () => _delete(item),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator()),
+                    error: (error, _) => Center(child: Text('$error')),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    ),
-    ],
-  ),
-);
+    );
   }
 }

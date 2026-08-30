@@ -5,6 +5,7 @@ import 'package:later/domain/models/save.dart';
 import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 import 'package:later/ui/core/widgets/sync_chip.dart';
@@ -350,22 +351,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isExporting ? null : _exportBackup,
-                    icon: _isExporting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.file_upload_outlined, size: 18),
-                    label: Text(_isExporting ? l10n.get('exporting') : l10n.get('exportBackup')),
+                  child: BouncyTap(
+                    onTap: _isExporting ? null : _exportBackup,
+                    child: OutlinedButton.icon(
+                      onPressed: _isExporting ? null : _exportBackup,
+                      icon: _isExporting
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.file_upload_outlined, size: 18),
+                      label: Text(_isExporting ? l10n.get('exporting') : l10n.get('exportBackup')),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _isImporting ? null : _importRestore,
-                    icon: _isImporting
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.file_download_outlined, size: 18),
-                    label: Text(_isImporting ? l10n.get('restoring') : l10n.get('restoreFile')),
+                  child: BouncyTap(
+                    onTap: _isImporting ? null : _importRestore,
+                    child: FilledButton.icon(
+                      onPressed: _isImporting ? null : _importRestore,
+                      icon: _isImporting
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.file_download_outlined, size: 18),
+                      label: Text(_isImporting ? l10n.get('restoring') : l10n.get('restoreFile')),
+                    ),
                   ),
                 ),
               ],

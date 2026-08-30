@@ -5,6 +5,7 @@ import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_assets.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 
 class OnboardingSlide {
@@ -163,27 +164,30 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 // Bottom Action Button (Next / Get Started)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                      ),
-                      onPressed: () => _onNext(slides.length),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            isLastPage ? l10n.get('getStarted') : l10n.get('next'),
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            isLastPage ? Icons.check_circle_outline_rounded : Icons.arrow_forward_rounded,
-                            size: 20,
-                          ),
-                        ],
+                  child: BouncyTap(
+                    onTap: () => _onNext(slides.length),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
+                        ),
+                        onPressed: () => _onNext(slides.length),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              isLastPage ? l10n.get('getStarted') : l10n.get('next'),
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              isLastPage ? Icons.check_circle_outline_rounded : Icons.arrow_forward_rounded,
+                              size: 20,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

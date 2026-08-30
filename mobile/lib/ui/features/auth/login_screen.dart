@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:later/data/services/api_client.dart';
 import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
 import 'package:later/ui/core/widgets/later_logo.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
@@ -266,70 +267,83 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                     const SizedBox(height: 24),
 
-                    FilledButton(
-                      onPressed: _busy ? null : _submit,
-                      child: _busy
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
+                    BouncyTap(
+                      onTap: _busy ? null : _submit,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: FilledButton(
+                          onPressed: _busy ? null : _submit,
+                          child: _busy
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: theme.colorScheme.onPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(_isRegistering ? l10n.get('creatingAccount') : l10n.get('signingIn')),
+                                  ],
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      _isRegistering ? Icons.person_add_outlined : Icons.login_outlined,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(_isRegistering ? l10n.get('createAccount') : l10n.get('login')),
+                                  ],
                                 ),
-                                const SizedBox(width: 10),
-                                Text(_isRegistering ? l10n.get('creatingAccount') : l10n.get('signingIn')),
-                              ],
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  _isRegistering ? Icons.person_add_outlined : Icons.login_outlined,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(_isRegistering ? l10n.get('createAccount') : l10n.get('login')),
-                              ],
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: _busy ? null : _googleSignIn,
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.g_mobiledata_rounded, size: 24),
-                          const SizedBox(width: 6),
-                          Text(
-                            l10n.get('signInWithGoogle'),
-                            style: theme.textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    BouncyTap(
+                      onTap: _busy ? null : _googleSignIn,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: _busy ? null : _googleSignIn,
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
-                        ],
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.g_mobiledata_rounded, size: 24),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.get('signInWithGoogle'),
+                                style: theme.textTheme.labelLarge,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                     if (_showServer) ...[
                       const SizedBox(height: 36),
-                      Material(
-                        color: theme.colorScheme.surface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: BorderSide(color: theme.dividerColor),
-                        ),
-                        child: InkWell(
-                          onTap: _openServer,
-                          borderRadius: BorderRadius.circular(8),
+                      BouncyTap(
+                        onTap: _openServer,
+                        child: Material(
+                          color: theme.colorScheme.surface,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: theme.dividerColor),
+                          ),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
                             child: Row(

@@ -1,8 +1,8 @@
 # Status
 
-**Stage:** execute (Clipboard Auto-Intake & Emil Kowalski Motion Design)
+**Stage:** execute (Universal Emil Kowalski Motion Design Across All Screens)
 
-**Active slice:** Later — Automatic Clipboard Link Detection Banner & Emil Kowalski Fluid Micro-Interactions (BouncyTap, Staggered Card Entrance, Floating Toast Physics).
+**Active slice:** Later — Universal Emil Kowalski Motion Design & Micro-interactions (BouncyTap, spring physics, staggered entrances) across Onboarding, Auth, Saves, Detail, Collections, and Settings screens.
 
 ## Run
 

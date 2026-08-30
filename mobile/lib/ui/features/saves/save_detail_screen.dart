@@ -6,6 +6,7 @@ import 'package:later/domain/models/save.dart';
 import 'package:later/domain/source_app.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 import 'package:later/ui/core/widgets/sync_chip.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -168,12 +169,15 @@ class _SaveDetailScreenState extends ConsumerState<SaveDetailScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _openLink,
-        icon: const Icon(Icons.open_in_new_rounded),
-        label: const Text(
-          'Open Link',
-          style: TextStyle(fontWeight: FontWeight.bold),
+      floatingActionButton: BouncyTap(
+        onTap: _openLink,
+        child: FloatingActionButton.extended(
+          onPressed: _openLink,
+          icon: const Icon(Icons.open_in_new_rounded),
+          label: const Text(
+            'Open Link',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ),
       body: Stack(
