@@ -46,7 +46,14 @@ class LaterApp extends ConsumerWidget {
       theme: LaterTheme.light(),
       darkTheme: LaterTheme.dark(),
       themeMode: mode,
-      builder: (context, child) => ShareListener(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        final clampedScaler = mediaQuery.textScaler.clamp(minScaleFactor: 0.85, maxScaleFactor: 1.35);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedScaler),
+          child: ShareListener(child: child ?? const SizedBox.shrink()),
+        );
+      },
       home: homeWidget,
     );
   }

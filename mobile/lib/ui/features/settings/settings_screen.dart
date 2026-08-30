@@ -254,6 +254,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
     );
   }
 
+  Widget _buildSettingsSectionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color iconColor,
+    required List<Widget> children,
+  }) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 0,
+      margin: const EdgeInsets.only(bottom: 16),
+      color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.35),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.6)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 20, color: iconColor),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      if (subtitle.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.secondary,
+                            fontSize: 11.5,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGeneralTab(BuildContext context, ThemeData theme) {
     final mode = ref.watch(themeModeProvider);
     final loggedIn = ref.watch(authTokenProvider) != null;
@@ -266,308 +333,325 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
     final failedItem = saves.where((s) => s.syncStatus == SyncStatus.syncFailed && s.syncError != null).firstOrNull;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, 32 + bottom),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 32 + bottom),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
-        const LaterSectionTitle(icon: Icons.backup_outlined, title: 'Backup & Restore'),
-        const SizedBox(height: 6),
-        Text(
-          'Export your collections and saved links to JSON, or restore from a backup file.',
-          style: theme.textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 14),
-        Row(
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.backup_outlined,
+          title: 'Backup & Restore',
+          subtitle: 'Export your collections and saved links to JSON, or restore from a backup file.',
+          iconColor: Colors.blue.shade700,
           children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: _isExporting ? null : _exportBackup,
-                icon: _isExporting
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.file_upload_outlined, size: 18),
-                label: Text(_isExporting ? 'Exporting...' : 'Export Backup'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _isImporting ? null : _importRestore,
-                icon: _isImporting
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.file_download_outlined, size: 18),
-                label: Text(_isImporting ? 'Restoring...' : 'Restore File'),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isExporting ? null : _exportBackup,
+                    icon: _isExporting
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.file_upload_outlined, size: 18),
+                    label: Text(_isExporting ? 'Exporting...' : 'Export Backup'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _isImporting ? null : _importRestore,
+                    icon: _isImporting
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.file_download_outlined, size: 18),
+                    label: Text(_isImporting ? 'Restoring...' : 'Restore File'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        const SizedBox(height: 28),
 
         if (_showServerConfig) ...[
-          const LaterSectionTitle(icon: Icons.dns_outlined, title: 'Server Connection'),
-          const SizedBox(height: 6),
-          Text(
-            'The phone talks to this backend API URL.',
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          const LaterLabel('API URL'),
-          TextField(
-            controller: _api,
-            keyboardType: TextInputType.url,
-            autocorrect: false,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
-              hintText: 'https://later-dz.site',
-              prefixIcon: const LaterInputIcon(Icons.link_outlined),
-              errorText: _apiError,
-              errorMaxLines: 3,
-            ),
-            onChanged: _onApiChanged,
-          ),
-          const SizedBox(height: 10),
-          Row(
+          _buildSettingsSectionCard(
+            context: context,
+            icon: Icons.dns_outlined,
+            title: 'Server Connection',
+            subtitle: 'The phone talks to this backend API URL.',
+            iconColor: Colors.teal.shade700,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _isTestingConnection ? null : _testConnection,
-                  icon: _isTestingConnection
-                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                      : const Icon(Icons.sensors_rounded, size: 18),
-                  label: Text(_isTestingConnection ? 'Testing...' : 'Test Connection'),
+              const LaterLabel('API URL'),
+              TextField(
+                controller: _api,
+                keyboardType: TextInputType.url,
+                autocorrect: false,
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  hintText: 'https://later-dz.site',
+                  prefixIcon: const LaterInputIcon(Icons.link_outlined),
+                  errorText: _apiError,
+                  errorMaxLines: 3,
                 ),
+                onChanged: _onApiChanged,
               ),
-            ],
-          ),
-          if (_connectionMessage != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: _connectionSuccess == true ? LaterColors.chipSyncedBg : LaterColors.chipFailedBg,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: _connectionSuccess == true ? LaterColors.chipSyncedFg.withValues(alpha: 0.3) : LaterColors.chipFailedFg.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 10),
+              Row(
                 children: [
-                  Icon(
-                    _connectionSuccess == true ? Icons.check_circle_outline_rounded : Icons.error_outline_rounded,
-                    size: 18,
-                    color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
-                  ),
-                  const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      _connectionMessage!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
-                      ),
+                    child: OutlinedButton.icon(
+                      onPressed: _isTestingConnection ? null : _testConnection,
+                      icon: _isTestingConnection
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.sensors_rounded, size: 18),
+                      label: Text(_isTestingConnection ? 'Testing...' : 'Test Connection'),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-          const SizedBox(height: 28),
-        ],
-        const SizedBox(height: 28),
-        const LaterSectionTitle(icon: Icons.sync_rounded, title: 'Sync Status & Diagnostics'),
-        const SizedBox(height: 10),
-        Card(
-          elevation: 0,
-          color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _syncBadgeColumn('Synced', syncedCount, LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
-                    _syncBadgeColumn('Pending', pendingCount, LaterColors.chipPendingBg, LaterColors.chipPendingFg),
-                    _syncBadgeColumn('Failed', failedCount, LaterColors.chipFailedBg, LaterColors.chipFailedFg),
-                  ],
-                ),
-                if (failedItem?.syncError != null) ...[
-                  const SizedBox(height: 12),
-                  const Divider(height: 1),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Last error: ${failedItem!.syncError}',
-                    style: const TextStyle(fontSize: 12, color: LaterColors.chipFailedFg, fontStyle: FontStyle.italic),
+              if (_connectionMessage != null) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: _connectionSuccess == true ? LaterColors.chipSyncedBg : LaterColors.chipFailedBg,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: _connectionSuccess == true ? LaterColors.chipSyncedFg.withValues(alpha: 0.3) : LaterColors.chipFailedFg.withValues(alpha: 0.3),
+                    ),
                   ),
-                ],
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _isSyncingAll ? null : _syncAllNow,
-                    icon: _isSyncingAll
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.sync_rounded, size: 18),
-                    label: Text(_isSyncingAll ? 'Syncing...' : 'Sync Everything Now'),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        _connectionSuccess == true ? Icons.check_circle_outline_rounded : Icons.error_outline_rounded,
+                        size: 18,
+                        color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _connectionMessage!,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 28),
-        const LaterSectionTitle(icon: Icons.palette_outlined, title: 'Appearance'),
-        const SizedBox(height: 6),
-        Text('Follows the phone unless you pin Light or Dark.', style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 16),
-        SegmentedButton<ThemeMode>(
-          expandedInsets: EdgeInsets.zero,
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(
-              value: ThemeMode.system,
-              label: Text('System'),
-              icon: Icon(Icons.brightness_auto_outlined, size: 18),
-              tooltip: 'Match the phone',
-            ),
-            ButtonSegment(
-              value: ThemeMode.light,
-              label: Text('Light'),
-              icon: Icon(Icons.light_mode_outlined, size: 18),
-            ),
-            ButtonSegment(
-              value: ThemeMode.dark,
-              label: Text('Dark'),
-              icon: Icon(Icons.dark_mode_outlined, size: 18),
-            ),
-          ],
-          selected: {mode},
-          onSelectionChanged: (value) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              ref.read(themeModeProvider.notifier).setMode(value.first);
-            });
-          },
-        ),
-        const SizedBox(height: 28),
-        const LaterSectionTitle(icon: Icons.language_rounded, title: 'Language'),
-        const SizedBox(height: 6),
-        Text('Choose the interface display language.', style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 16),
-        SegmentedButton<String>(
-          expandedInsets: EdgeInsets.zero,
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(
-              value: 'system',
-              label: Text('Auto'),
-              tooltip: 'Match phone language',
-            ),
-            ButtonSegment(
-              value: 'en',
-              label: Text('EN'),
-            ),
-            ButtonSegment(
-              value: 'ar',
-              label: Text('عربي'),
-            ),
-            ButtonSegment(
-              value: 'fr',
-              label: Text('FR'),
-            ),
-          ],
-          selected: {ref.watch(appLanguageProvider)},
-          onSelectionChanged: (value) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              ref.read(appLanguageProvider.notifier).setLanguage(value.first);
-            });
-          },
-        ),
-        const SizedBox(height: 28),
-        const LaterSectionTitle(icon: Icons.cleaning_services_rounded, title: 'Cache & Storage'),
-        const SizedBox(height: 6),
-        Text('Manage locally cached link previews and thumbnail images.', style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: () {
-            PaintingBinding.instance.imageCache.clear();
-            PaintingBinding.instance.imageCache.clearLiveImages();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('App cache cleared successfully!'),
-              ),
-            );
-          },
-          icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-          label: const Text('Clear Image Cache'),
-        ),
-        const SizedBox(height: 28),
-        const LaterSectionTitle(icon: Icons.shield_outlined, title: 'Legal & Privacy'),
-        const SizedBox(height: 12),
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceContainerHigh.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.privacy_tip_outlined, size: 20),
-                  title: const Text('Privacy Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  subtitle: const Text('https://later-dz.site/privacy', style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.open_in_new_rounded, size: 16),
-                  onTap: () => _openExternalUrl('https://later-dz.site/privacy'),
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.description_outlined, size: 20),
-                  title: const Text('Terms of Service', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  subtitle: const Text('https://later-dz.site/terms', style: TextStyle(fontSize: 12)),
-                  trailing: const Icon(Icons.open_in_new_rounded, size: 16),
-                  onTap: () => _openExternalUrl('https://later-dz.site/terms'),
-                ),
-                const Divider(height: 1),
-                const ListTile(
-                  leading: Icon(Icons.lock_outline_rounded, size: 20),
-                  title: Text('Data Safety & Encryption', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                  subtitle: Text('All data is transmitted via TLS / HTTPS', style: TextStyle(fontSize: 12)),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (loggedIn) ...[
-          const SizedBox(height: 36),
-          const LaterSectionTitle(icon: Icons.person_outline, title: 'Session & Account'),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _logout,
-                  icon: const Icon(Icons.logout_outlined, size: 18),
-                  label: const Text('Log out'),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: LaterColors.chipFailedFg,
-                    side: const BorderSide(color: LaterColors.chipFailedFg),
-                  ),
-                  onPressed: _deleteAccount,
-                  icon: const Icon(Icons.delete_forever_outlined, size: 18),
-                  label: const Text('Delete Account & Data'),
+        ],
+
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.sync_rounded,
+          title: 'Sync Status & Diagnostics',
+          subtitle: 'Local sqlite & server synchronization status',
+          iconColor: Colors.green.shade700,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _syncBadgeColumn('Synced', syncedCount, LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
+                _syncBadgeColumn('Pending', pendingCount, LaterColors.chipPendingBg, LaterColors.chipPendingFg),
+                _syncBadgeColumn('Failed', failedCount, LaterColors.chipFailedBg, LaterColors.chipFailedFg),
+              ],
+            ),
+            if (failedItem?.syncError != null) ...[
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Text(
+                'Last error: ${failedItem!.syncError}',
+                style: const TextStyle(fontSize: 12, color: LaterColors.chipFailedFg, fontStyle: FontStyle.italic),
+              ),
+            ],
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _isSyncingAll ? null : _syncAllNow,
+                icon: _isSyncingAll
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.sync_rounded, size: 18),
+                label: Text(_isSyncingAll ? 'Syncing...' : 'Sync Everything Now'),
+              ),
+            ),
+          ],
+        ),
+
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.palette_outlined,
+          title: 'Appearance',
+          subtitle: 'Follows the phone unless you pin Light or Dark.',
+          iconColor: Colors.amber.shade800,
+          children: [
+            SegmentedButton<ThemeMode>(
+              expandedInsets: EdgeInsets.zero,
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                  value: ThemeMode.system,
+                  label: Text('System'),
+                  icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                  tooltip: 'Match the phone',
                 ),
+                ButtonSegment(
+                  value: ThemeMode.light,
+                  label: Text('Light'),
+                  icon: Icon(Icons.light_mode_outlined, size: 18),
+                ),
+                ButtonSegment(
+                  value: ThemeMode.dark,
+                  label: Text('Dark'),
+                  icon: Icon(Icons.dark_mode_outlined, size: 18),
+                ),
+              ],
+              selected: {mode},
+              onSelectionChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(themeModeProvider.notifier).setMode(value.first);
+                });
+              },
+            ),
+          ],
+        ),
+
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.language_rounded,
+          title: 'Language',
+          subtitle: 'Choose the interface display language.',
+          iconColor: Colors.indigo.shade700,
+          children: [
+            SegmentedButton<String>(
+              expandedInsets: EdgeInsets.zero,
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment(
+                  value: 'system',
+                  label: Text('Auto'),
+                  tooltip: 'Match phone language',
+                ),
+                ButtonSegment(
+                  value: 'en',
+                  label: Text('EN'),
+                ),
+                ButtonSegment(
+                  value: 'ar',
+                  label: Text('عربي'),
+                ),
+                ButtonSegment(
+                  value: 'fr',
+                  label: Text('FR'),
+                ),
+              ],
+              selected: {ref.watch(appLanguageProvider)},
+              onSelectionChanged: (value) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  ref.read(appLanguageProvider.notifier).setLanguage(value.first);
+                });
+              },
+            ),
+          ],
+        ),
+
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.cleaning_services_rounded,
+          title: 'Cache & Storage',
+          subtitle: 'Manage locally cached link previews and thumbnail images.',
+          iconColor: Colors.purple.shade700,
+          children: [
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  PaintingBinding.instance.imageCache.clear();
+                  PaintingBinding.instance.imageCache.clearLiveImages();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('App image cache cleared successfully!'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.delete_sweep_rounded, size: 18),
+                label: const Text('Clear Image Cache'),
+              ),
+            ),
+          ],
+        ),
+
+        _buildSettingsSectionCard(
+          context: context,
+          icon: Icons.shield_outlined,
+          title: 'Legal & Privacy',
+          subtitle: 'Privacy policy, terms of service, and encryption',
+          iconColor: Colors.blueGrey.shade800,
+          children: [
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.privacy_tip_outlined, size: 20),
+              title: const Text('Privacy Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              subtitle: const Text('https://later-dz.site/privacy', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.open_in_new_rounded, size: 16),
+              onTap: () => _openExternalUrl('https://later-dz.site/privacy'),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.description_outlined, size: 20),
+              title: const Text('Terms of Service', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              subtitle: const Text('https://later-dz.site/terms', style: TextStyle(fontSize: 12)),
+              trailing: const Icon(Icons.open_in_new_rounded, size: 16),
+              onTap: () => _openExternalUrl('https://later-dz.site/terms'),
+            ),
+            const Divider(height: 1),
+            const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.lock_outline_rounded, size: 20),
+              title: Text('Data Safety & Encryption', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              subtitle: Text('All data is transmitted via TLS / HTTPS', style: TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+
+        if (loggedIn) ...[
+          _buildSettingsSectionCard(
+            context: context,
+            icon: Icons.person_outline,
+            title: 'Session & Account',
+            subtitle: 'Manage authentication and data removal',
+            iconColor: Colors.red.shade700,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _logout,
+                      icon: const Icon(Icons.logout_outlined, size: 18),
+                      label: const Text('Log out'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: LaterColors.chipFailedFg,
+                        side: const BorderSide(color: LaterColors.chipFailedFg),
+                      ),
+                      onPressed: _deleteAccount,
+                      icon: const Icon(Icons.delete_forever_outlined, size: 18),
+                      label: const Text('Delete Account & Data'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
