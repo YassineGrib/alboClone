@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_assets.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
@@ -33,30 +34,30 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  static const List<OnboardingSlide> _slides = [
-    OnboardingSlide(
-      title: 'Share From Any App',
-      description:
-          'Save links, videos, recipes, or articles directly from TikTok, Instagram, YouTube, or your browser in one tap.',
-      icon: Icons.share_rounded,
-      tags: ['TikTok', 'Instagram', 'YouTube', 'Browser'],
-    ),
-    OnboardingSlide(
-      title: 'AI Summaries & Tags',
-      description:
-          'Automatic concise titles, AI summaries, and smart categorization powered by Gemini AI so you never lose context.',
-      icon: Icons.auto_awesome_rounded,
-      tags: ['Auto Titles', 'Smart Tags', 'Gemini AI'],
-      highlightIcon: true,
-    ),
-    OnboardingSlide(
-      title: 'Save Now, Read Calmly',
-      description:
-          'A serene, offline-first home for your saved bookmarks with collections, instant search, and location map pins.',
-      icon: Icons.bookmark_added_rounded,
-      tags: ['Offline First', 'Map Pins', 'Collections'],
-    ),
-  ];
+  List<OnboardingSlide> _getSlides(BuildContext context) {
+    final l10n = context.l10n;
+    return [
+      OnboardingSlide(
+        title: l10n.get('onboarding1Title'),
+        description: l10n.get('onboarding1Desc'),
+        icon: Icons.share_rounded,
+        tags: const ['TikTok', 'Instagram', 'YouTube', 'Browser'],
+      ),
+      OnboardingSlide(
+        title: l10n.get('onboarding2Title'),
+        description: l10n.get('onboarding2Desc'),
+        icon: Icons.auto_awesome_rounded,
+        tags: const ['Auto Titles', 'Smart Tags', 'Gemini AI'],
+        highlightIcon: true,
+      ),
+      OnboardingSlide(
+        title: l10n.get('onboarding3Title'),
+        description: l10n.get('onboarding3Desc'),
+        icon: Icons.bookmark_added_rounded,
+        tags: const ['Offline First', 'Map Pins', 'Collections'],
+      ),
+    ];
+  }
 
   @override
   void dispose() {
@@ -64,8 +65,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     super.dispose();
   }
 
-  void _onNext() {
-    if (_currentPage < _slides.length - 1) {
+  void _onNext(int slidesCount) {
+    if (_currentPage < slidesCount - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOutCubic,
@@ -84,7 +85,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final onSurface = theme.colorScheme.onSurface;
-    final isLastPage = _currentPage == _slides.length - 1;
+    final slides = _getSlides(context);
+    final isLastPage = _currentPage == slides.length - 1;
+    final l10n = context.l10n;
 
     return Scaffold(
       body: Stack(
@@ -112,7 +115,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           foregroundColor: theme.colorScheme.secondary,
                           textStyle: const TextStyle(fontWeight: FontWeight.w600),
                         ),
-                        child: const Text('Skip'),
+                        child: Text(l10n.get('skip')),
                       ),
                     ],
                   ),
@@ -125,9 +128,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     onPageChanged: (index) {
                       setState(() => _currentPage = index);
                     },
-                    itemCount: _slides.length,
+                    itemCount: slides.length,
                     itemBuilder: (context, index) {
-                      final slide = _slides[index];
+                      final slide = slides[index];
                       return _buildSlideCard(slide, theme, isDark);
                     },
                   ),
@@ -138,7 +141,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_slides.length, (index) {
+                    children: List.generate(slides.length, (index) {
                       final isActive = index == _currentPage;
                       return AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
@@ -167,12 +170,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                       style: FilledButton.styleFrom(
                         shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
                       ),
-                      onPressed: _onNext,
+                      onPressed: () => _onNext(slides.length),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            isLastPage ? 'Get Started' : 'Next',
+                            isLastPage ? l10n.get('getStarted') : l10n.get('next'),
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: 8),

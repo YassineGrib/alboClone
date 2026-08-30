@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/features/auth/login_screen.dart';
@@ -39,6 +40,7 @@ class LaterApp extends ConsumerWidget {
         Locale('fr'),
       ],
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,

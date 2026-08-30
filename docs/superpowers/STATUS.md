@@ -1,8 +1,8 @@
 # Status
 
-**Stage:** execute (Play Console Feedback Fixes)
+**Stage:** execute (Full App Localization - EN/AR/FR)
 
-**Active slice:** Play Console Closed Testing Feedback — Accessibility & Text Scaling + Settings Section Visual Hierarchy
+**Active slice:** Later — Comprehensive Multi-Language Localization (English, Arabic RTL, French) across Onboarding, Auth, Saves, Collections, and Settings.
 
 ## Run
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:later/domain/api_url.dart';
 import 'package:later/domain/models/save.dart';
+import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
@@ -220,19 +221,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final l10n = context.l10n;
+
     return Scaffold(
       appBar: AppBar(
         title: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _onTitleTap,
-          child: const Text('Settings'),
+          child: Text(l10n.get('settings')),
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(icon: Icon(Icons.tune_outlined), text: 'General'),
-            Tab(icon: Icon(Icons.auto_awesome_outlined), text: 'Gemini AI'),
-            Tab(icon: Icon(Icons.help_outline_rounded), text: 'Guide'),
+          tabs: [
+            Tab(icon: const Icon(Icons.tune_outlined), text: l10n.get('general')),
+            Tab(icon: const Icon(Icons.auto_awesome_outlined), text: l10n.get('geminiAi')),
+            Tab(icon: const Icon(Icons.help_outline_rounded), text: l10n.get('guide')),
           ],
         ),
       ),
@@ -326,6 +329,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
     final loggedIn = ref.watch(authTokenProvider) != null;
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     final saves = ref.watch(savesProvider).asData?.value ?? [];
+    final l10n = context.l10n;
 
     final syncedCount = saves.where((s) => s.syncStatus == SyncStatus.synced).length;
     final pendingCount = saves.where((s) => s.syncStatus == SyncStatus.pendingSync).length;
@@ -339,8 +343,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.backup_outlined,
-          title: 'Backup & Restore',
-          subtitle: 'Export your collections and saved links to JSON, or restore from a backup file.',
+          title: l10n.get('backupAndRestore'),
+          subtitle: l10n.get('backupAndRestoreSub'),
           iconColor: Colors.blue.shade700,
           children: [
             Row(
@@ -351,7 +355,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                     icon: _isExporting
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                         : const Icon(Icons.file_upload_outlined, size: 18),
-                    label: Text(_isExporting ? 'Exporting...' : 'Export Backup'),
+                    label: Text(_isExporting ? l10n.get('exporting') : l10n.get('exportBackup')),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -361,7 +365,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                     icon: _isImporting
                         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                         : const Icon(Icons.file_download_outlined, size: 18),
-                    label: Text(_isImporting ? 'Restoring...' : 'Restore File'),
+                    label: Text(_isImporting ? l10n.get('restoring') : l10n.get('restoreFile')),
                   ),
                 ),
               ],
@@ -373,11 +377,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
           _buildSettingsSectionCard(
             context: context,
             icon: Icons.dns_outlined,
-            title: 'Server Connection',
-            subtitle: 'The phone talks to this backend API URL.',
+            title: l10n.get('serverConnection'),
+            subtitle: l10n.get('serverConnectionSub'),
             iconColor: Colors.teal.shade700,
             children: [
-              const LaterLabel('API URL'),
+              LaterLabel(l10n.get('apiUrl')),
               TextField(
                 controller: _api,
                 keyboardType: TextInputType.url,
@@ -400,7 +404,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                       icon: _isTestingConnection
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.sensors_rounded, size: 18),
-                      label: Text(_isTestingConnection ? 'Testing...' : 'Test Connection'),
+                      label: Text(_isTestingConnection ? l10n.get('testing') : l10n.get('testConnection')),
                     ),
                   ),
                 ],
@@ -446,16 +450,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.sync_rounded,
-          title: 'Sync Status & Diagnostics',
-          subtitle: 'Local sqlite & server synchronization status',
+          title: l10n.get('syncStatusTitle'),
+          subtitle: l10n.get('syncStatusSub'),
           iconColor: Colors.green.shade700,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _syncBadgeColumn('Synced', syncedCount, LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
-                _syncBadgeColumn('Pending', pendingCount, LaterColors.chipPendingBg, LaterColors.chipPendingFg),
-                _syncBadgeColumn('Failed', failedCount, LaterColors.chipFailedBg, LaterColors.chipFailedFg),
+                _syncBadgeColumn(l10n.get('synced'), syncedCount, LaterColors.chipSyncedBg, LaterColors.chipSyncedFg),
+                _syncBadgeColumn(l10n.get('pending'), pendingCount, LaterColors.chipPendingBg, LaterColors.chipPendingFg),
+                _syncBadgeColumn(l10n.get('failed'), failedCount, LaterColors.chipFailedBg, LaterColors.chipFailedFg),
               ],
             ),
             if (failedItem?.syncError != null) ...[
@@ -475,7 +479,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                 icon: _isSyncingAll
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.sync_rounded, size: 18),
-                label: Text(_isSyncingAll ? 'Syncing...' : 'Sync Everything Now'),
+                label: Text(_isSyncingAll ? l10n.get('syncing') : l10n.get('syncEverythingNow')),
               ),
             ),
           ],
@@ -484,29 +488,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.palette_outlined,
-          title: 'Appearance',
-          subtitle: 'Follows the phone unless you pin Light or Dark.',
+          title: l10n.get('appearance'),
+          subtitle: l10n.get('appearanceSub'),
           iconColor: Colors.amber.shade800,
           children: [
             SegmentedButton<ThemeMode>(
               expandedInsets: EdgeInsets.zero,
               showSelectedIcon: false,
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: ThemeMode.system,
-                  label: Text('System'),
-                  icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                  label: Text(l10n.get('system')),
+                  icon: const Icon(Icons.brightness_auto_outlined, size: 18),
                   tooltip: 'Match the phone',
                 ),
                 ButtonSegment(
                   value: ThemeMode.light,
-                  label: Text('Light'),
-                  icon: Icon(Icons.light_mode_outlined, size: 18),
+                  label: Text(l10n.get('light')),
+                  icon: const Icon(Icons.light_mode_outlined, size: 18),
                 ),
                 ButtonSegment(
                   value: ThemeMode.dark,
-                  label: Text('Dark'),
-                  icon: Icon(Icons.dark_mode_outlined, size: 18),
+                  label: Text(l10n.get('dark')),
+                  icon: const Icon(Icons.dark_mode_outlined, size: 18),
                 ),
               ],
               selected: {mode},
@@ -522,28 +526,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.language_rounded,
-          title: 'Language',
-          subtitle: 'Choose the interface display language.',
+          title: l10n.get('language'),
+          subtitle: l10n.get('languageSub'),
           iconColor: Colors.indigo.shade700,
           children: [
             SegmentedButton<String>(
               expandedInsets: EdgeInsets.zero,
               showSelectedIcon: false,
-              segments: const [
+              segments: [
                 ButtonSegment(
                   value: 'system',
-                  label: Text('Auto'),
+                  label: Text(l10n.get('auto')),
                   tooltip: 'Match phone language',
                 ),
-                ButtonSegment(
+                const ButtonSegment(
                   value: 'en',
                   label: Text('EN'),
                 ),
-                ButtonSegment(
+                const ButtonSegment(
                   value: 'ar',
                   label: Text('عربي'),
                 ),
-                ButtonSegment(
+                const ButtonSegment(
                   value: 'fr',
                   label: Text('FR'),
                 ),
@@ -561,8 +565,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.cleaning_services_rounded,
-          title: 'Cache & Storage',
-          subtitle: 'Manage locally cached link previews and thumbnail images.',
+          title: l10n.get('cacheAndStorage'),
+          subtitle: l10n.get('cacheSub'),
           iconColor: Colors.purple.shade700,
           children: [
             SizedBox(
@@ -578,7 +582,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                   );
                 },
                 icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-                label: const Text('Clear Image Cache'),
+                label: Text(l10n.get('clearImageCache')),
               ),
             ),
           ],
@@ -587,14 +591,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
         _buildSettingsSectionCard(
           context: context,
           icon: Icons.shield_outlined,
-          title: 'Legal & Privacy',
-          subtitle: 'Privacy policy, terms of service, and encryption',
+          title: l10n.get('legalAndPrivacy'),
+          subtitle: l10n.get('legalSub'),
           iconColor: Colors.blueGrey.shade800,
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.privacy_tip_outlined, size: 20),
-              title: const Text('Privacy Policy', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text(l10n.get('privacyPolicy'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               subtitle: const Text('https://later-dz.site/privacy', style: TextStyle(fontSize: 12)),
               trailing: const Icon(Icons.open_in_new_rounded, size: 16),
               onTap: () => _openExternalUrl('https://later-dz.site/privacy'),
@@ -603,17 +607,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.description_outlined, size: 20),
-              title: const Text('Terms of Service', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              title: Text(l10n.get('termsOfService'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
               subtitle: const Text('https://later-dz.site/terms', style: TextStyle(fontSize: 12)),
               trailing: const Icon(Icons.open_in_new_rounded, size: 16),
               onTap: () => _openExternalUrl('https://later-dz.site/terms'),
             ),
             const Divider(height: 1),
-            const ListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.lock_outline_rounded, size: 20),
-              title: Text('Data Safety & Encryption', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-              subtitle: Text('All data is transmitted via TLS / HTTPS', style: TextStyle(fontSize: 12)),
+              leading: const Icon(Icons.lock_outline_rounded, size: 20),
+              title: Text(l10n.get('dataSafety'), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              subtitle: Text(l10n.get('dataSafetySub'), style: const TextStyle(fontSize: 12)),
             ),
           ],
         ),
@@ -622,8 +626,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
           _buildSettingsSectionCard(
             context: context,
             icon: Icons.person_outline,
-            title: 'Session & Account',
-            subtitle: 'Manage authentication and data removal',
+            title: l10n.get('sessionAndAccount'),
+            subtitle: l10n.get('sessionSub'),
             iconColor: Colors.red.shade700,
             children: [
               Row(
@@ -632,7 +636,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                     child: OutlinedButton.icon(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout_outlined, size: 18),
-                      label: const Text('Log out'),
+                      label: Text(l10n.get('logOut')),
                     ),
                   ),
                 ],
@@ -648,7 +652,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                       ),
                       onPressed: _deleteAccount,
                       icon: const Icon(Icons.delete_forever_outlined, size: 18),
-                      label: const Text('Delete Account & Data'),
+                      label: Text(l10n.get('deleteAccountAndData')),
                     ),
                   ),
                 ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:later/data/services/api_client.dart';
+import 'package:later/l10n/app_localizations.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/widgets/later_form.dart';
 import 'package:later/ui/core/widgets/later_logo.dart';
@@ -21,7 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _password = TextEditingController();
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
-  
+
   bool _isRegistering = false;
   String? _error;
   bool _busy = false;
@@ -154,6 +155,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final theme = Theme.of(context);
     final api = ref.watch(apiBaseUrlProvider);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final l10n = context.l10n;
 
     return Scaffold(
       body: Stack(
@@ -172,23 +174,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: const LaterLogo.wordmark(height: 52),
                     ),
                     const SizedBox(height: 8),
-                    Text('Save a link. Find it again.', style: theme.textTheme.bodySmall),
+                    Text(l10n.get('tagline'), style: theme.textTheme.bodySmall),
                     const SizedBox(height: 28),
 
                     // Toggle Segmented Control
                     SegmentedButton<bool>(
                       expandedInsets: EdgeInsets.zero,
                       showSelectedIcon: false,
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: false,
-                          label: Text('Log in'),
-                          icon: Icon(Icons.login_outlined, size: 18),
+                          label: Text(l10n.get('login')),
+                          icon: const Icon(Icons.login_outlined, size: 18),
                         ),
                         ButtonSegment(
                           value: true,
-                          label: Text('Create account'),
-                          icon: Icon(Icons.person_add_outlined, size: 18),
+                          label: Text(l10n.get('createAccount')),
+                          icon: const Icon(Icons.person_add_outlined, size: 18),
                         ),
                       ],
                       selected: {_isRegistering},
@@ -197,7 +199,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     const SizedBox(height: 24),
 
                     if (_isRegistering) ...[
-                      const LaterLabel('Full Name'),
+                      LaterLabel(l10n.get('fullName')),
                       TextField(
                         controller: _name,
                         enabled: !_busy,
@@ -213,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: 18),
                     ],
 
-                    const LaterLabel('Email'),
+                    LaterLabel(l10n.get('email')),
                     TextField(
                       controller: _email,
                       focusNode: _emailFocus,
@@ -230,7 +232,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: 18),
 
-                    const LaterLabel('Password'),
+                    LaterLabel(l10n.get('password')),
                     TextField(
                       controller: _password,
                       focusNode: _passwordFocus,
@@ -256,7 +258,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
 
                     if (!_isRegistering)
-                      const LaterHelper('Local seed is you@local.test / password.'),
+                      LaterHelper(l10n.get('localSeedNotice')),
 
                     if (_error != null) ...[
                       const SizedBox(height: 16),
@@ -279,7 +281,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 10),
-                                Text(_isRegistering ? 'Creating account...' : 'Signing in...'),
+                                Text(_isRegistering ? l10n.get('creatingAccount') : l10n.get('signingIn')),
                               ],
                             )
                           : Row(
@@ -291,7 +293,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(_isRegistering ? 'Create account' : 'Log in'),
+                                Text(_isRegistering ? l10n.get('createAccount') : l10n.get('login')),
                               ],
                             ),
                     ),
@@ -311,7 +313,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const Icon(Icons.g_mobiledata_rounded, size: 24),
                           const SizedBox(width: 6),
                           Text(
-                            'Sign in with Google',
+                            l10n.get('signInWithGoogle'),
                             style: theme.textTheme.labelLarge,
                           ),
                         ],
@@ -338,7 +340,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text('Server', style: theme.textTheme.bodySmall),
+                                      Text(l10n.get('server'), style: theme.textTheme.bodySmall),
                                       const SizedBox(height: 4),
                                       Text(
                                         api,
