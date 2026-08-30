@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:later/data/services/api_client.dart';
 import 'package:later/domain/models/collection.dart';
@@ -11,6 +12,8 @@ import 'package:later/domain/save_timeline.dart';
 import 'package:later/domain/source_app.dart';
 import 'package:later/ui/app_providers.dart';
 import 'package:later/ui/core/theme/later_theme.dart';
+import 'package:later/ui/core/widgets/bouncy_tap.dart';
+import 'package:later/ui/core/widgets/clipboard_intake_banner.dart';
 import 'package:later/ui/core/widgets/later_logo.dart';
 import 'package:later/ui/core/widgets/later_mark_pattern.dart';
 import 'package:later/ui/core/widgets/swipe_to_delete_tile.dart';
@@ -31,11 +34,14 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
   final _urlFocus = FocusNode();
   String? _fieldError;
   Timer? _poll;
+  String? _clipboardUrl;
+  String? _lastDismissedUrl;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkClipboard();
     _poll = Timer.periodic(const Duration(seconds: 2), (_) {
       final items = ref.read(savesProvider).asData?.value ?? [];
       final waiting = items.any(
@@ -60,6 +66,26 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       syncLater(ref);
+      _checkClipboard();
+    }
+  }
+
+  Future<void> _checkClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = data?.text?.trim();
+      if (text != null && text.isNotEmpty) {
+        final uri = Uri.tryParse(text);
+        if (uri != null && (uri.scheme == 'http' || uri.scheme == 'https') && uri.hasAuthority) {
+          if (text != _clipboardUrl && text != _lastDismissedUrl) {
+            setState(() {
+              _clipboardUrl = text;
+            });
+          }
+        }
+      }
+    } catch (_) {
+      // Platform clipboard access errors can be safely ignored
     }
   }
 
@@ -211,16 +237,17 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                             const SizedBox(width: 8),
                             SizedBox(
                               width: 48,
-                              child: IconButton(
-                                tooltip: 'Add link',
-                                onPressed: _add,
-                                style: IconButton.styleFrom(
-                                  backgroundColor: theme.colorScheme.primary,
-                                  foregroundColor: theme.colorScheme.onPrimary,
-                                  shape: const RoundedRectangleBorder(borderRadius: LaterTheme.radius),
-                                  padding: EdgeInsets.zero,
+                              child: BouncyTap(
+                                onTap: _add,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary,
+                                    borderRadius: LaterTheme.radius,
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.add_rounded, size: 22, color: Colors.white),
+                                  ),
                                 ),
-                                icon: const Icon(Icons.add_rounded, size: 22),
                               ),
                             ),
                           ],
@@ -419,7 +446,7 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                               ),
                             ],
                             const SliverToBoxAdapter(
-                              child: SizedBox(height: 24),
+                              child: SizedBox(height: 80),
                             ),
                           ],
                         ),
@@ -432,6 +459,40 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
               ],
             ),
           ),
+
+          // Floating Clipboard Auto-Intake Banner
+          if (_clipboardUrl != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 16,
+              child: ClipboardIntakeBanner(
+                url: _clipboardUrl!,
+                onAdd: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final urlToAdd = _clipboardUrl!;
+                  setState(() => _clipboardUrl = null);
+                  try {
+                    final aiEnabled = ref.read(aiEnabledProvider);
+                    await ref.read(saveRepositoryProvider).addUrl(
+                          urlToAdd,
+                          collectionId: _activeCollectionId,
+                          aiEnabled: aiEnabled,
+                        );
+                  } on FormatException catch (e) {
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(e.message)),
+                    );
+                  }
+                },
+                onDismiss: () {
+                  setState(() {
+                    _lastDismissedUrl = _clipboardUrl;
+                    _clipboardUrl = null;
+                  });
+                },
+              ),
+            ),
         ],
       ),
       floatingActionButton: Badge(
@@ -471,7 +532,7 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
       itemKey: ValueKey(item.id),
       onDismissed: () => ref.read(saveRepositoryProvider).delete(item),
       onMove: () => _move(item),
-      child: InkWell(
+      child: BouncyTap(
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(
