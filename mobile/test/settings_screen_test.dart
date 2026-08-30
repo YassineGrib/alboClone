@@ -10,7 +10,7 @@ import 'package:later/ui/features/settings/settings_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('invalid API URL shows an error and is not saved', (tester) async {
+  testWidgets('invalid API URL shows an error when server config is unlocked', (tester) async {
     SharedPreferences.setMockInitialValues({
       SettingsRepository.apiKey: 'http://127.0.0.1:8080',
     });
@@ -29,6 +29,14 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+
+    // Tap title 3 times to unlock Server Connection
+    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Server Connection'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'not-a-url');
     await tester.pump();
@@ -91,7 +99,7 @@ void main() {
     expect(find.text('Smart Content Categorization'), findsOneWidget);
   });
 
-  testWidgets('shows Server Connection and Sync Status sections on General tab', (tester) async {
+  testWidgets('shows Backup & Restore and hidden Server Connection on General tab', (tester) async {
     SharedPreferences.setMockInitialValues({});
     FlutterSecureStorage.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
@@ -109,10 +117,19 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(find.text('Backup & Restore'), findsOneWidget);
+    expect(find.text('Export Backup'), findsOneWidget);
+    expect(find.text('Restore File'), findsOneWidget);
+    expect(find.text('Server Connection'), findsNothing);
+
+    // Tap title 3 times to unlock Server Connection
+    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('Settings'));
+    await tester.tap(find.text('Settings'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Server Connection'), findsOneWidget);
     expect(find.text('Test Connection'), findsOneWidget);
-    expect(find.text('Sync Status & Diagnostics'), findsOneWidget);
-    expect(find.text('Sync Everything Now'), findsOneWidget);
 
     await tester.scrollUntilVisible(
       find.text('Language'),
@@ -120,16 +137,6 @@ void main() {
       scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
     );
     expect(find.text('Language'), findsOneWidget);
-
-    await tester.scrollUntilVisible(
-      find.text('Legal & Privacy'),
-      200,
-      scrollable: find.descendant(of: find.byType(ListView), matching: find.byType(Scrollable)).first,
-    );
-    expect(find.text('Legal & Privacy'), findsOneWidget);
-    expect(find.text('Privacy Policy'), findsOneWidget);
-    expect(find.text('Terms of Service'), findsOneWidget);
-    expect(find.text('Data Safety & Encryption'), findsOneWidget);
   });
 
   testWidgets('shows Delete Account button and dialog when logged in', (tester) async {

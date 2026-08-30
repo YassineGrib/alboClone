@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:later/data/local/app_database.dart';
 import 'package:later/data/repositories/auth_repository.dart';
+import 'package:later/data/repositories/backup_repository.dart';
 import 'package:later/data/repositories/collection_repository.dart';
 import 'package:later/data/repositories/save_repository.dart';
 import 'package:later/data/repositories/settings_repository.dart';
@@ -33,6 +34,11 @@ class WelcomeSeenController extends StateNotifier<bool> {
   Future<void> completeWelcome() async {
     await _settings.setHasSeenWelcome(true);
     state = true;
+  }
+
+  Future<void> resetWelcome() async {
+    await _settings.setHasSeenWelcome(false);
+    state = false;
   }
 }
 
@@ -159,6 +165,13 @@ final collectionRepositoryProvider = Provider<CollectionRepository>((ref) {
   return CollectionRepository(
     db: ref.watch(databaseProvider),
     api: ref.watch(apiClientProvider),
+  );
+});
+
+final backupRepositoryProvider = Provider<BackupRepository>((ref) {
+  return BackupRepository(
+    db: ref.watch(databaseProvider),
+    saveRepository: ref.watch(saveRepositoryProvider),
   );
 });
 

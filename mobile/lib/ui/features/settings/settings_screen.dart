@@ -24,6 +24,57 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
   bool? _connectionSuccess;
   String? _connectionMessage;
   bool _isSyncingAll = false;
+  bool _showServerConfig = false;
+  int _settingsTapCount = 0;
+  bool _isExporting = false;
+  bool _isImporting = false;
+
+  void _onTitleTap() {
+    setState(() {
+      _settingsTapCount++;
+      if (_settingsTapCount >= 3) {
+        _showServerConfig = true;
+      }
+    });
+  }
+
+  Future<void> _exportBackup() async {
+    setState(() => _isExporting = true);
+    try {
+      await ref.read(backupRepositoryProvider).exportBackupFile();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Export failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isExporting = false);
+    }
+  }
+
+  Future<void> _importRestore() async {
+    setState(() => _isImporting = true);
+    try {
+      final count = await ref.read(backupRepositoryProvider).importAndRestoreFile();
+      if (mounted && count != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully restored $count items and collections!'),
+            backgroundColor: LaterColors.chipSyncedFg,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restore failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isImporting = false);
+    }
+  }
 
   @override
   void initState() {
@@ -171,7 +222,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: _onTitleTap,
+          child: const Text('Settings'),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -214,74 +269,109 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
       padding: EdgeInsets.fromLTRB(24, 16, 24, 32 + bottom),
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       children: [
-        const LaterSectionTitle(icon: Icons.dns_outlined, title: 'Server Connection'),
+        const LaterSectionTitle(icon: Icons.backup_outlined, title: 'Backup & Restore'),
         const SizedBox(height: 6),
         Text(
-          'The phone talks to this backend API URL.',
+          'Export your collections and saved links to JSON, or restore from a backup file.',
           style: theme.textTheme.bodyMedium,
         ),
-        const SizedBox(height: 16),
-        const LaterLabel('API URL'),
-        TextField(
-          controller: _api,
-          keyboardType: TextInputType.url,
-          autocorrect: false,
-          textInputAction: TextInputAction.done,
-          decoration: InputDecoration(
-            hintText: 'https://later-dz.site',
-            prefixIcon: const LaterInputIcon(Icons.link_outlined),
-            errorText: _apiError,
-            errorMaxLines: 3,
-          ),
-          onChanged: _onApiChanged,
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _isTestingConnection ? null : _testConnection,
-                icon: _isTestingConnection
+                onPressed: _isExporting ? null : _exportBackup,
+                icon: _isExporting
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.sensors_rounded, size: 18),
-                label: Text(_isTestingConnection ? 'Testing...' : 'Test Connection'),
+                    : const Icon(Icons.file_upload_outlined, size: 18),
+                label: Text(_isExporting ? 'Exporting...' : 'Export Backup'),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton.icon(
+                onPressed: _isImporting ? null : _importRestore,
+                icon: _isImporting
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.file_download_outlined, size: 18),
+                label: Text(_isImporting ? 'Restoring...' : 'Restore File'),
               ),
             ),
           ],
         ),
-        if (_connectionMessage != null) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: _connectionSuccess == true ? LaterColors.chipSyncedBg : LaterColors.chipFailedBg,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: _connectionSuccess == true ? LaterColors.chipSyncedFg.withValues(alpha: 0.3) : LaterColors.chipFailedFg.withValues(alpha: 0.3),
-              ),
+        const SizedBox(height: 28),
+
+        if (_showServerConfig) ...[
+          const LaterSectionTitle(icon: Icons.dns_outlined, title: 'Server Connection'),
+          const SizedBox(height: 6),
+          Text(
+            'The phone talks to this backend API URL.',
+            style: theme.textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 16),
+          const LaterLabel('API URL'),
+          TextField(
+            controller: _api,
+            keyboardType: TextInputType.url,
+            autocorrect: false,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(
+              hintText: 'https://later-dz.site',
+              prefixIcon: const LaterInputIcon(Icons.link_outlined),
+              errorText: _apiError,
+              errorMaxLines: 3,
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  _connectionSuccess == true ? Icons.check_circle_outline_rounded : Icons.error_outline_rounded,
-                  size: 18,
-                  color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+            onChanged: _onApiChanged,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _isTestingConnection ? null : _testConnection,
+                  icon: _isTestingConnection
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.sensors_rounded, size: 18),
+                  label: Text(_isTestingConnection ? 'Testing...' : 'Test Connection'),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _connectionMessage!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+              ),
+            ],
+          ),
+          if (_connectionMessage != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: _connectionSuccess == true ? LaterColors.chipSyncedBg : LaterColors.chipFailedBg,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: _connectionSuccess == true ? LaterColors.chipSyncedFg.withValues(alpha: 0.3) : LaterColors.chipFailedFg.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    _connectionSuccess == true ? Icons.check_circle_outline_rounded : Icons.error_outline_rounded,
+                    size: 18,
+                    color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _connectionMessage!,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: _connectionSuccess == true ? LaterColors.chipSyncedFg : LaterColors.chipFailedFg,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
+          const SizedBox(height: 28),
         ],
         const SizedBox(height: 28),
         const LaterSectionTitle(icon: Icons.sync_rounded, title: 'Sync Status & Diagnostics'),
@@ -675,6 +765,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                     SizedBox(width: 8),
                     Expanded(child: Text('F = Failed sync (tap ... on card to retry)', style: TextStyle(fontSize: 13))),
                   ],
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(welcomeSeenProvider.notifier).resetWelcome();
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    },
+                    icon: const Icon(Icons.slideshow_rounded, size: 18),
+                    label: const Text('Replay Onboarding Carousel'),
+                  ),
                 ),
               ],
             ),
