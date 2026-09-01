@@ -118,8 +118,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Backup & Restore'), findsOneWidget);
-    expect(find.text('Export Backup'), findsOneWidget);
-    expect(find.text('Restore File'), findsOneWidget);
+    expect(find.text('Export'), findsOneWidget);
+    expect(find.text('Restore'), findsOneWidget);
     expect(find.text('Server Connection'), findsNothing);
 
     // Tap title 3 times to unlock Server Connection

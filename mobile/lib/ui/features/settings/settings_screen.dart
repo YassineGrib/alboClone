@@ -358,7 +358,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                       icon: _isExporting
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.file_upload_outlined, size: 18),
-                      label: Text(_isExporting ? l10n.get('exporting') : l10n.get('exportBackup')),
+                      label: Text(
+                        _isExporting ? l10n.get('exporting') : l10n.get('exportBackup'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ),
@@ -371,7 +375,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> with SingleTick
                       icon: _isImporting
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                           : const Icon(Icons.file_download_outlined, size: 18),
-                      label: Text(_isImporting ? l10n.get('restoring') : l10n.get('restoreFile')),
+                      label: Text(
+                        _isImporting ? l10n.get('restoring') : l10n.get('restoreFile'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ),
