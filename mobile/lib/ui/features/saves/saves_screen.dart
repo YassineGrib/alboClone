@@ -96,6 +96,15 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
 
   Future<void> _add() async {
     setState(() => _fieldError = null);
+    if (_url.text.trim().isEmpty) {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      final text = data?.text?.trim();
+      if (text != null && text.isNotEmpty) {
+        _url.text = text;
+      } else {
+        return;
+      }
+    }
     try {
       final aiEnabled = ref.read(aiEnabledProvider);
       await ref.read(saveRepositoryProvider).addUrl(
@@ -244,8 +253,12 @@ class _SavesScreenState extends ConsumerState<SavesScreen> with WidgetsBindingOb
                                     color: theme.colorScheme.primary,
                                     borderRadius: LaterTheme.radius,
                                   ),
-                                  child: const Center(
-                                    child: Icon(Icons.add_rounded, size: 22, color: Colors.white),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.content_paste_rounded,
+                                      size: 20,
+                                      color: theme.colorScheme.onPrimary,
+                                    ),
                                   ),
                                 ),
                               ),

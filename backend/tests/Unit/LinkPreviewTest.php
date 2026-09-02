@@ -38,4 +38,21 @@ class LinkPreviewTest extends TestCase
 
         $this->assertSame('https://example.com/img/a.jpg', $preview->imageUrl);
     }
+
+    public function test_reads_description_meta_tags(): void
+    {
+        $html = <<<'HTML'
+        <html><head>
+          <meta property="og:title" content="Classic Tiramisu">
+          <meta property="og:description" content="Authentic Italian recipe with mascarpone and espresso.">
+          <meta property="og:image" content="https://cdn.example.com/tiramisu.jpg">
+        </head></html>
+        HTML;
+
+        $preview = LinkPreview::fromHtml($html, 'https://example.com/tiramisu');
+
+        $this->assertSame('Classic Tiramisu', $preview->title);
+        $this->assertSame('Authentic Italian recipe with mascarpone and espresso.', $preview->description);
+    }
 }
+

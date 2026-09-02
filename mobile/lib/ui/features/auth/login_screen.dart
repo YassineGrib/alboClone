@@ -115,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
     try {
       final googleSignIn = GoogleSignIn(
-        serverClientId: '365151770587-2tte83j70ceop2f22g8ssir855nhadqv.apps.googleusercontent.com',
+        serverClientId: '1082007382744-s651dajf0qeeo3tk8t78shdkuf1erora.apps.googleusercontent.com',
         scopes: ['email', 'profile'],
       );
       final account = await googleSignIn.signIn();

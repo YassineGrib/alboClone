@@ -67,6 +67,104 @@ class ParseSaveJobTest extends TestCase
         $this->assertSame('https://i.ytimg.com/vi/abc/hqdefault.jpg', $save->image_url);
     }
 
+    public function test_ai_creates_smart_topic_collection_and_clean_title(): void
+    {
+        config(['services.gemini.key' => 'fake-key']);
+
+        Http::fake([
+            'https://instagram.com/reel/123' => Http::response(
+                '<html><head><meta property="og:title" content="Watch this video on Instagram by @chef_john: best creamy garlic pasta recipe ever!!"><meta property="og:description" content="Quick 15 min dinner idea with parmesan and garlic."></head></html>',
+                200,
+            ),
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'title' => 'Creamy Garlic Parmesan Pasta',
+                                        'summary' => 'A fast 15-minute Italian dinner recipe with garlic and parmesan.',
+                                        'category' => 'Recipes',
+                                        'collection' => 'Recipes',
+                                        'tags' => ['pasta', 'dinner', 'italian'],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $save = $this->makeSave('https://instagram.com/reel/123');
+
+        ParseSaveJob::dispatchSync($save->id, aiEnabled: true);
+
+        $save->refresh();
+        $this->assertSame('ready', $save->content_status);
+        $this->assertSame('Creamy Garlic Parmesan Pasta', $save->title);
+        $this->assertSame('Recipes', $save->category);
+        $this->assertNotNull($save->collection_id);
+        $this->assertSame('Recipes', $save->collection->name);
+    }
+
+    public function test_ai_matches_existing_user_collection(): void
+    {
+        config(['services.gemini.key' => 'fake-key']);
+
+        $user = User::factory()->create();
+        $existingCollection = \App\Models\Collection::create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'name' => 'Meals & Cooking',
+        ]);
+
+        $save = Save::query()->create([
+            'id' => (string) Str::uuid(),
+            'user_id' => $user->id,
+            'url' => 'https://tiktok.com/@chef/video/456',
+            'title' => 'TikTok video',
+            'content_status' => 'pending',
+        ]);
+
+        Http::fake([
+            'https://tiktok.com/@chef/video/456' => Http::response(
+                '<html><head><meta property="og:title" content="Viral Crispy Chicken Burger Recipe"><meta property="og:description" content="Homemade crispy burger"></head></html>',
+                200,
+            ),
+            'https://generativelanguage.googleapis.com/*' => Http::response([
+                'candidates' => [
+                    [
+                        'content' => [
+                            'parts' => [
+                                [
+                                    'text' => json_encode([
+                                        'title' => 'Crispy Chicken Burger',
+                                        'summary' => 'Step by step guide to making a crispy chicken burger.',
+                                        'category' => 'Recipes',
+                                        'collection' => 'Meals & Cooking',
+                                        'tags' => ['burger', 'chicken', 'recipe'],
+                                    ]),
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        ParseSaveJob::dispatchSync($save->id, aiEnabled: true);
+
+        $save->refresh();
+        $this->assertSame('Crispy Chicken Burger', $save->title);
+        $this->assertSame('Recipes', $save->category);
+        // It must link to the existing collection, NOT create a duplicate one
+        $this->assertSame($existingCollection->id, $save->collection_id);
+        $this->assertSame('Meals & Cooking', $save->collection->name);
+    }
+
+
     private function makeSave(string $url): Save
     {
         $user = User::factory()->create();

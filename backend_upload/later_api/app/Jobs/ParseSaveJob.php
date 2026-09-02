@@ -29,8 +29,22 @@ class ParseSaveJob implements ShouldQueue
             $save->image_url = $preview->imageUrl;
 
             if ($this->aiEnabled) {
+                // Fetch user's existing collections
+                $userCollections = \App\Models\Collection::query()
+                    ->where('user_id', $save->user_id)
+                    ->pluck('name', 'id')
+                    ->toArray();
+
+                $collectionNames = array_values($userCollections);
+
                 // AI Enrichment with Gemini
-                $aiData = $gemini->analyze($save->url, $initialTitle);
+                $aiData = $gemini->analyze(
+                    url: $save->url,
+                    title: $initialTitle,
+                    description: $preview->description,
+                    existingCollections: $collectionNames,
+                );
+
                 if (!empty($aiData['title'])) {
                     $save->title = $aiData['title'];
                 }
@@ -38,14 +52,30 @@ class ParseSaveJob implements ShouldQueue
                 $save->category = $aiData['category'] ?? 'Link';
                 $save->ai_tags = $aiData['tags'] ?? [];
 
-                // Smart AI Auto-Folder: If unfiled and category is meaningful, put in folder
-                if ($save->collection_id === null && !empty($save->category) && !in_array(strtolower($save->category), ['link', 'other'], true)) {
-                    $collectionName = ucfirst(trim($save->category));
-                    $collection = \App\Models\Collection::firstOrCreate(
-                        ['user_id' => $save->user_id, 'name' => $collectionName],
-                        ['id' => (string) \Illuminate\Support\Str::uuid()]
-                    );
-                    $save->collection_id = $collection->id;
+                // Smart AI Auto-Folder: If unfiled and collection/category is meaningful
+                if ($save->collection_id === null) {
+                    $targetFolder = trim($aiData['collection'] ?? $aiData['category'] ?? '');
+                    if (!empty($targetFolder) && !in_array(strtolower($targetFolder), ['link', 'other', 'general', 'none'], true)) {
+                        // Check if matches an existing user collection (case-insensitive)
+                        $existingId = null;
+                        foreach ($userCollections as $colId => $colName) {
+                            if (strcasecmp((string)$colName, $targetFolder) === 0) {
+                                $existingId = $colId;
+                                break;
+                            }
+                        }
+
+                        if ($existingId !== null) {
+                            $save->collection_id = $existingId;
+                        } else {
+                            $collection = \App\Models\Collection::create([
+                                'id' => (string) \Illuminate\Support\Str::uuid(),
+                                'user_id' => $save->user_id,
+                                'name' => ucfirst($targetFolder),
+                            ]);
+                            $save->collection_id = $collection->id;
+                        }
+                    }
                 }
             } else {
                 $save->category = 'Link';

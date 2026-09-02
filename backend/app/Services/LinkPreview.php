@@ -7,6 +7,7 @@ class LinkPreview
     public function __construct(
         public readonly ?string $title,
         public readonly ?string $imageUrl,
+        public readonly ?string $description = null,
     ) {}
 
     public static function fromHtml(string $html, string $pageUrl): self
@@ -14,6 +15,10 @@ class LinkPreview
         $title = self::meta($html, 'og:title')
             ?? self::meta($html, 'twitter:title')
             ?? self::titleTag($html);
+
+        $description = self::meta($html, 'og:description')
+            ?? self::meta($html, 'twitter:description')
+            ?? self::meta($html, 'description');
 
         $image = self::meta($html, 'og:image')
             ?? self::meta($html, 'twitter:image')
@@ -31,6 +36,7 @@ class LinkPreview
         return new self(
             title: $title !== null ? html_entity_decode(trim($title), ENT_QUOTES | ENT_HTML5, 'UTF-8') : null,
             imageUrl: self::absolutize($image, $pageUrl),
+            description: $description !== null ? html_entity_decode(trim($description), ENT_QUOTES | ENT_HTML5, 'UTF-8') : null,
         );
     }
 
@@ -38,10 +44,12 @@ class LinkPreview
     {
         $title = isset($payload['title']) ? trim((string) $payload['title']) : null;
         $image = isset($payload['thumbnail_url']) ? trim((string) $payload['thumbnail_url']) : null;
+        $description = isset($payload['description']) ? trim((string) $payload['description']) : null;
 
         return new self(
             title: $title !== '' ? $title : null,
             imageUrl: $image !== '' ? $image : null,
+            description: $description !== '' ? $description : null,
         );
     }
 
