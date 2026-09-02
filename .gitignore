@@ -20,3 +20,16 @@ mobile/.flutter-plugins-dependencies
 
 *.iml
 .idea/
+
+# Secrets & credentials
+*.keystore
+*.jks
+key.properties
+client_secret*.json
+google-services.json
+
+# Archives & binaries
+*.zip
+*.tar.gz
+*.aab
+
